@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#070707" />
+  <title>EDGE — Drop 01</title>
+  <meta name="description" content="EDGE is a clothing & merch label. Every piece starts as a story. Drop 01 is live." />
+  <meta property="og:title" content="EDGE — Drop 01" />
+  <meta property="og:description" content="Every piece starts as a story. Drop 01 is live." />
+  <meta property="og:image" content="/brand/edge-wordmark.png" />
+  <link rel="icon" href="/brand/edge-mark.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+</head>
+<body class="is-loading">
+  <!-- ░░ Preloader ░░ -->
+  <div class="loader" aria-hidden="true">
+    <div class="loader__panel loader__panel--top"></div>
+    <div class="loader__panel loader__panel--bottom"></div>
+    <div class="loader__inner">
+      <div class="loader__mark">
+        <img src="/brand/edge-g.png" alt="" class="loader__g loader__g--ghost" />
+        <img src="/brand/edge-g.png" alt="" class="loader__g loader__g--fill" />
+      </div>
+      <div class="loader__meta">
+        <span>EDGE / DROP 01</span>
+        <span class="loader__count">000</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="grain" aria-hidden="true"></div>
+  <div class="cursor" aria-hidden="true"><span class="cursor__label"></span></div>
+
+  <!-- ░░ Nav ░░ -->
+  <header class="nav">
+    <a href="#top" class="nav__logo" aria-label="EDGE — home">
+      <img src="/brand/edge-mark.png" alt="" />
+    </a>
+    <div class="nav__status"><span class="dot"></span><span data-brand="drop"></span>&nbsp;— live</div>
+    <nav class="nav__links" aria-label="Primary">
+      <a href="#drop" data-magnetic>Drop</a>
+      <a href="#different" data-magnetic>Why Edge</a>
+      <a href="#team" data-magnetic>Team</a>
+      <a href="#contact" data-magnetic>Contact</a>
+    </nav>
+    <button class="nav__burger" aria-label="Open menu" aria-expanded="false">
+      <span></span><span></span>
+    </button>
+  </header>
+
+  <div class="menu" aria-hidden="true">
+    <nav class="menu__links">
+      <a href="#drop"><i>01</i><span>Drop</span></a>
+      <a href="#different"><i>02</i><span>Why Edge</span></a>
+      <a href="#team"><i>03</i><span>Team</span></a>
+      <a href="#contact"><i>04</i><span>Contact</span></a>
+    </nav>
+    <div class="menu__foot">
+      <a data-link="instagram" target="_blank" rel="noopener">Instagram ↗</a>
+      <a data-link="email">Email ↗</a>
+    </div>
+  </div>
+
+  <main id="top">
+    <!-- ░░ Hero ░░ -->
+    <section class="hero">
+      <canvas class="hero__gl"></canvas>
+      <img class="hero__fallback" src="/brand/edge-wordmark.png" alt="" />
+      <h1 class="sr-only">EDGE — clothing and merch</h1>
+      <div class="hero__top">
+        <span class="mono">(EDGE®)</span>
+        <span class="mono hero__coords">Clothing &amp; Merch — Est. 2026</span>
+      </div>
+      <div class="hero__bottom">
+        <p class="hero__lede serif" data-brand="tagline"></p>
+        <a href="#drop" class="hero__cta" data-magnetic data-cursor="Scroll">
+          <span class="hero__cta-ring"><svg viewBox="0 0 100 100"><defs><path id="c" d="M50,50 m-38,0 a38,38 0 1,1 76,0 a38,38 0 1,1 -76,0"/></defs><text><textPath href="#c">SEE THE DROP · SEE THE DROP · SEE THE DROP · </textPath></text></svg></span>
+          <span class="hero__cta-arrow">↓</span>
+        </a>
+      </div>
+    </section>
+
+    <!-- ░░ Tapes ░░ -->
+    <section class="tapes" aria-hidden="true">
+      <div class="tape tape--a"><div class="tape__track"></div></div>
+      <div class="tape tape--b"><div class="tape__track"></div></div>
+    </section>
+
+    <!-- ░░ Drop ░░ -->
+    <section class="drop" id="drop">
+      <div class="drop__head">
+        <p class="mono eyebrow"><span data-brand="dropDate"></span> — <span class="drop__count"></span> pieces</p>
+        <h2 class="display drop__title"><span class="drop__title-word">Drop</span> <em class="serif">01</em></h2>
+        <p class="drop__intro">Every piece below has a story. Tap one to read it and see it up close.</p>
+      </div>
+      <div class="drop__pin">
+        <div class="drop__track"></div>
+      </div>
+    </section>
+
+    <!-- ░░ What makes Edge different ░░ -->
+    <section class="different" id="different">
+      <div class="manifesto">
+        <p class="mono eyebrow">What makes Edge different</p>
+        <p class="manifesto__text"></p>
+      </div>
+      <ol class="pillars"></ol>
+    </section>
+
+    <!-- ░░ Team ░░ -->
+    <section class="team" id="team">
+      <div class="team__head">
+        <p class="mono eyebrow">The people</p>
+        <h2 class="display">Small team.<br /><em class="serif">Loud</em> ideas.</h2>
+      </div>
+      <div class="team__grid"></div>
+    </section>
+
+    <!-- ░░ Contact ░░ -->
+    <section class="contact" id="contact">
+      <p class="mono eyebrow">Contact</p>
+      <a class="contact__big" data-link="email" data-cursor="Write">
+        <span class="contact__line">Let’s</span>
+        <span class="contact__line"><em class="serif">talk</em>&nbsp;→</span>
+      </a>
+      <div class="contact__grid">
+        <form class="contact__form" novalidate>
+          <label><span class="mono">Name</span><input name="name" autocomplete="name" required /></label>
+          <label><span class="mono">About</span>
+            <select name="topic">
+              <option>A design from the drop</option>
+              <option>Collab / wholesale</option>
+              <option>Just saying hi</option>
+            </select>
+          </label>
+          <label class="full"><span class="mono">Message</span><textarea name="message" rows="4" required></textarea></label>
+          <button type="submit" class="btn" data-magnetic><span>Send message</span></button>
+          <p class="mono contact__note">Opens your email app — we reply to everything.</p>
+        </form>
+        <ul class="contact__links">
+          <li><a data-link="instagram" target="_blank" rel="noopener"><span class="mono">Instagram</span><b></b></a></li>
+          <li><a data-link="email"><span class="mono">Email</span><b></b></a></li>
+          <li data-if="whatsapp"><a data-link="whatsapp" target="_blank" rel="noopener"><span class="mono">WhatsApp</span><b>Message us</b></a></li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <div class="foot__mark"><img src="/brand/edge-wordmark.png" alt="EDGE" /></div>
+    <div class="foot__row mono">
+      <span>© <span class="year"></span> EDGE</span>
+      <span data-brand="city"></span>
+      <a href="#top" data-magnetic>Back to top ↑</a>
+    </div>
+  </footer>
+
+  <!-- ░░ Design detail (opened via #/drop/<slug>) ░░ -->
+  <div class="detail" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Design details">
+    <div class="detail__wipe"></div>
+    <div class="detail__scroller" data-lenis-prevent>
+      <button class="detail__close" aria-label="Close" data-magnetic><span></span><span></span></button>
+      <div class="detail__content"></div>
+    </div>
+  </div>
+
+  <div class="lightbox" aria-hidden="true">
+    <img alt="" />
+    <button class="lightbox__close mono" aria-label="Close image">Close ✕</button>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
