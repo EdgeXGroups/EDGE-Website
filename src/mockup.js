@@ -71,7 +71,7 @@ function isLight(hex) {
 }
 
 export function mockup(design, view = 'front') {
-  const { base, accent, motif: kind, type, name } = design
+  const { base = '#141414', accent, motif: kind = 'bloom', type = 'Tee', name } = design
   const ink = isLight(base) ? '#0b0b0b' : '#efece6'
   const { path, hood } = shapes(type)
   const bgA = view === 'flat' ? accent : '#161616'

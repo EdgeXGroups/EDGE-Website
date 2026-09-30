@@ -42,9 +42,9 @@
     <div class="nav__status"><span class="dot"></span><span data-brand="drop"></span>&nbsp;— live</div>
     <nav class="nav__links" aria-label="Primary">
       <a href="#drop" data-magnetic>Drop</a>
+      <a href="/collection.html" data-magnetic>Archive</a>
       <a href="#different" data-magnetic>Why Edge</a>
       <a href="#team" data-magnetic>Team</a>
-      <a href="#contact" data-magnetic>Contact</a>
     </nav>
     <button class="nav__burger" aria-label="Open menu" aria-expanded="false">
       <span></span><span></span>
@@ -54,9 +54,9 @@
   <div class="menu" aria-hidden="true">
     <nav class="menu__links">
       <a href="#drop"><i>01</i><span>Drop</span></a>
-      <a href="#different"><i>02</i><span>Why Edge</span></a>
-      <a href="#team"><i>03</i><span>Team</span></a>
-      <a href="#contact"><i>04</i><span>Contact</span></a>
+      <a href="/collection.html"><i>02</i><span>Archive</span></a>
+      <a href="#different"><i>03</i><span>Why Edge</span></a>
+      <a href="#team"><i>04</i><span>Team</span></a>
     </nav>
     <div class="menu__foot">
       <a data-link="instagram" target="_blank" rel="noopener">Instagram ↗</a>
@@ -70,10 +70,6 @@
       <canvas class="hero__gl"></canvas>
       <img class="hero__fallback" src="/brand/edge-wordmark.png" alt="" />
       <h1 class="sr-only">EDGE — clothing and merch</h1>
-      <div class="hero__top">
-        <span class="mono">(EDGE®)</span>
-        <span class="mono hero__coords">Clothing &amp; Merch — Est. 2026</span>
-      </div>
       <div class="hero__bottom">
         <p class="hero__lede serif" data-brand="tagline"></p>
         <a href="#drop" class="hero__cta" data-magnetic data-cursor="Scroll">
@@ -89,12 +85,28 @@
       <div class="tape tape--b"><div class="tape__track"></div></div>
     </section>
 
+    <!-- ░░ Spotlight — newest piece, revealed by light ░░ -->
+    <section class="spot" id="spotlight" aria-label="Spotlight: the newest design">
+      <canvas class="spot__gl"></canvas>
+      <div class="spot__intro">
+        <p class="mono eyebrow">Now showing</p>
+        <p class="spot__lead serif">Lights down.<br />Something new.</p>
+        <p class="mono spot__hint">Keep scrolling ↓</p>
+      </div>
+      <div class="spot__stage"><div class="spot__float"><div class="spot__piece"></div></div></div>
+      <div class="spot__caption">
+        <p class="mono spot__num"></p>
+        <h2 class="display spot__name"></h2>
+        <p class="serif spot__tag"></p>
+        <a class="btn spot__cta" data-magnetic><span>Read the story</span></a>
+      </div>
+      <div class="spot__progress" aria-hidden="true"><i></i></div>
+    </section>
+
     <!-- ░░ Drop ░░ -->
     <section class="drop" id="drop">
       <div class="drop__head">
-        <p class="mono eyebrow"><span data-brand="dropDate"></span> — <span class="drop__count"></span> pieces</p>
-        <h2 class="display drop__title"><span class="drop__title-word">Drop</span> <em class="serif">01</em></h2>
-        <p class="drop__intro">Every piece below has a story. Tap one to read it and see it up close.</p>
+        <h2 class="display drop__title"><span class="line-mask"><span>Drop</span></span><span class="line-mask"><em class="serif">01</em></span></h2>
       </div>
       <div class="drop__pin">
         <div class="drop__track"></div>
@@ -119,34 +131,6 @@
       <div class="team__grid"></div>
     </section>
 
-    <!-- ░░ Contact ░░ -->
-    <section class="contact" id="contact">
-      <p class="mono eyebrow">Contact</p>
-      <a class="contact__big" data-link="email" data-cursor="Write">
-        <span class="contact__line">Let’s</span>
-        <span class="contact__line"><em class="serif">talk</em>&nbsp;→</span>
-      </a>
-      <div class="contact__grid">
-        <form class="contact__form" novalidate>
-          <label><span class="mono">Name</span><input name="name" autocomplete="name" required /></label>
-          <label><span class="mono">About</span>
-            <select name="topic">
-              <option>A design from the drop</option>
-              <option>Collab / wholesale</option>
-              <option>Just saying hi</option>
-            </select>
-          </label>
-          <label class="full"><span class="mono">Message</span><textarea name="message" rows="4" required></textarea></label>
-          <button type="submit" class="btn" data-magnetic><span>Send message</span></button>
-          <p class="mono contact__note">Opens your email app — we reply to everything.</p>
-        </form>
-        <ul class="contact__links">
-          <li><a data-link="instagram" target="_blank" rel="noopener"><span class="mono">Instagram</span><b></b></a></li>
-          <li><a data-link="email"><span class="mono">Email</span><b></b></a></li>
-          <li data-if="whatsapp"><a data-link="whatsapp" target="_blank" rel="noopener"><span class="mono">WhatsApp</span><b>Message us</b></a></li>
-        </ul>
-      </div>
-    </section>
   </main>
 
   <footer class="foot">
@@ -154,6 +138,8 @@
     <div class="foot__row mono">
       <span>© <span class="year"></span> EDGE</span>
       <span data-brand="city"></span>
+      <a data-link="instagram" target="_blank" rel="noopener">Instagram ↗</a>
+      <a data-link="email">Email ↗</a>
       <a href="#top" data-magnetic>Back to top ↑</a>
     </div>
   </footer>

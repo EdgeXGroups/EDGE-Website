@@ -4,12 +4,19 @@
  *  Everything the site says lives here. Edit this file only.
  * ─────────────────────────────────────────────────────────────
  *
- *  PHOTOS: drop images into /public/designs/<slug>/ and list them
- *  in `images` like '/designs/static-bloom/front.jpg'.
- *  While `images` is empty, the site draws a placeholder mockup
- *  so the layout never looks broken.
+ *  DESIGNS are listed newest first. The home page shows the ones
+ *  marked `featured: true` (max 3) — or the first 3 if none are
+ *  marked. The first featured design also stars in the spotlight
+ *  scene. Every design is listed on the Archive page.
  *
- *  Portrait-ish photos (4:5) look best. ~1600px on the long side.
+ *  PHOTOS: put raw files in /design, register them in
+ *  scripts/process-designs.py and run:
+ *      python scripts/process-designs.py
+ *  That writes /public/designs/<slug>/front.webp + back.webp.
+ *  A design with no `images` gets a drawn placeholder mockup.
+ *
+ *  Stories marked DRAFT are placeholders — rewrite them in your
+ *  own words.
  */
 
 export const brand = {
@@ -25,88 +32,126 @@ export const brand = {
 
 export const designs = [
   {
-    slug: 'static-bloom',
-    name: 'Static Bloom',
+    slug: 'rising',
+    name: 'Rising',
+    type: 'Fleece Zip Jacket',
+    category: 'Originals',
+    featured: true,
+    tagline: 'Out of the fire, louder than before.',
+    accent: '#E4572E',
+    story: [ // DRAFT
+      'Made for Rajendra Prasad Hall of Residence. A phoenix was the obvious idea — so we spent weeks trying to make it anything but obvious.',
+      'On the back, the bird tears through RISING in hand-cut letters, a red sun behind it and a volcanic peak below. On the front, just the crest, small over the heart — so you know before anyone else does.',
+    ],
+    details: [['Garment', 'Fleece zip-up, stand collar'], ['Colour', 'Oat'], ['Print', 'Crest front, full back'], ['Edition', 'Limited run']],
+    images: ['/designs/rising/front.webp', '/designs/rising/back.webp'],
+  },
+  {
+    slug: 'never-retreat',
+    name: 'Never Retreat',
     type: 'Oversized Tee',
-    tagline: 'Flowers growing out of TV noise.',
-    accent: '#FF4A1C',
-    base: '#111111',        // garment colour used by the placeholder mockup
-    motif: 'bloom',         // placeholder graphic style: bloom | fault | orbit | signal
-    story: [
-      'It started with a broken television in a hostel corridor — the kind that only shows static. Someone had stuck a paper flower on the screen, and for a second it looked like it was growing out of the noise.',
-      'Static Bloom is about that second. Beauty that shows up uninvited, in places that were never meant to hold it. The print is layered by hand: a grain field underneath, a single bloom punched through on top.',
-      'Wear it loud. Or wear it under a jacket and let people find it.',
+    category: 'Anime',
+    featured: true,
+    tagline: 'Nothing happened.',
+    accent: '#9BB38A',
+    story: [ // DRAFT
+      'The sword runs down the front like a spine, and next to it four characters: 永不退縮 — never retreat, never shrink back.',
+      'The back is half shadow, half swordsman. One eye closed. Printed tone-on-tone on sage, so it only really hits when the light catches it.',
     ],
-    details: [
-      ['Fabric', '240 GSM combed cotton'],
-      ['Fit', 'Oversized, dropped shoulder'],
-      ['Print', 'Puff + screen, front & back'],
-      ['Edition', 'Limited run'],
-    ],
-    images: [],
+    details: [['Fit', 'Oversized'], ['Colour', 'Sage'], ['Print', 'Front & back'], ['Edition', 'Limited run']],
+    images: ['/designs/never-retreat/front.webp', '/designs/never-retreat/back.webp'],
   },
   {
-    slug: 'fault-line',
-    name: 'Fault Line',
-    type: 'Heavyweight Hoodie',
-    tagline: 'Everything interesting happens where things crack.',
-    accent: '#D8FF3C',
-    base: '#1a1a1a',
-    motif: 'fault',
-    story: [
-      'A fault line is where two things refuse to agree — and the ground gives way to something new. We think people work the same way.',
-      'The graphic is a single fracture traced from a satellite map, running shoulder to hem. On the back, the coordinates of where it was drawn.',
-      'Heavy, structured, built to be lived in for years.',
+    slug: '70-kms',
+    name: '70 KMs Ain’t Enough',
+    type: 'Oversized Tee',
+    category: 'Originals',
+    featured: true,
+    tagline: 'For the one who walks toward the mountains anyway.',
+    accent: '#7FA3D1',
+    story: [ // DRAFT
+      'There’s a famous clip of a single penguin leaving the colony and walking toward the mountains — seventy kilometres inland, towards nothing. Everyone calls it lost. We think it had somewhere to be.',
+      'On the front, just the penguin and its footprints, walking off toward the hem. On the back, the road it takes — ink-brush strokes stretching toward the peaks.',
     ],
-    details: [
-      ['Fabric', '420 GSM brushed fleece'],
-      ['Fit', 'Boxy, cropped hem'],
-      ['Print', 'High-density screen print'],
-      ['Edition', 'Limited run'],
-    ],
-    images: [],
+    details: [['Fit', 'Oversized'], ['Colour', 'White'], ['Print', 'Front & back'], ['Edition', 'Limited run']],
+    images: ['/designs/70-kms/front.webp', '/designs/70-kms/back.webp'],
   },
   {
-    slug: 'low-orbit',
-    name: 'Low Orbit',
-    type: 'Boxy Tee',
-    tagline: 'Close enough to see home. Far enough to miss it.',
-    accent: '#7AA2FF',
-    base: '#e9e6df',
-    motif: 'orbit',
-    story: [
-      'Written at 3 a.m. on a night train, somewhere between leaving and arriving. Low Orbit is for the in-between — the people who are always a little bit away from where they started.',
-      'A ring of type circles a small planet on the chest. Read it slowly: it is a letter nobody sent.',
+    slug: 'dragon-drift',
+    name: 'Dragon Drift',
+    type: 'Oversized Tee',
+    category: 'Motorsport',
+    tagline: 'Tyre smoke with a pulse.',
+    accent: '#D7263D',
+    story: [ // DRAFT
+      'A love letter to JDM night runs. Clean badge on the chest, and on the back a dragon rising out of the tyre smoke, coiling around a car mid-slide.',
+      'Drawn in heavy ink and finished with bold kanji — the whole back reads like a poster peeled off a garage wall.',
     ],
-    details: [
-      ['Fabric', '220 GSM cotton jersey'],
-      ['Fit', 'Boxy, regular length'],
-      ['Print', 'Water-based screen print'],
-      ['Edition', 'Limited run'],
-    ],
-    images: [],
+    details: [['Fit', 'Oversized'], ['Colour', 'Cream'], ['Print', 'Front & back'], ['Edition', 'Limited run']],
+    images: ['/designs/dragon-drift/front.webp', '/designs/dragon-drift/back.webp'],
   },
   {
-    slug: 'night-signal',
-    name: 'Night Signal',
-    type: 'Long Sleeve',
-    tagline: 'For the ones still awake.',
-    accent: '#FF3D8B',
-    base: '#0d0d0d',
-    motif: 'signal',
-    story: [
-      'City lights look like a signal if you stare long enough. Night Signal is a love letter to everyone building something while the rest of the world sleeps.',
-      'Reflective ink on the sleeves catches flash photography — so the shirt looks quiet in daylight and goes off at night.',
+    slug: 'saiyan-at-rest',
+    name: 'Saiyan at Rest',
+    type: 'Oversized Tee',
+    category: 'Anime',
+    tagline: 'Even the strongest sit down sometimes.',
+    accent: '#F28C28',
+    story: [ // DRAFT
+      'Across the chest: a single manga panel of eyes that have already decided. On the back: the same fighter, sitting in the rubble, catching his breath.',
+      'Laid out like a page from a manga volume — panels, credits, tiny type — because that’s how most of us first met him.',
     ],
-    details: [
-      ['Fabric', '200 GSM cotton rib'],
-      ['Fit', 'Relaxed, long sleeve'],
-      ['Print', 'Reflective + screen'],
-      ['Edition', 'Limited run'],
+    details: [['Fit', 'Oversized'], ['Colour', 'White'], ['Print', 'Front & back'], ['Edition', 'Limited run']],
+    images: ['/designs/saiyan-at-rest/front.webp', '/designs/saiyan-at-rest/back.webp'],
+  },
+  {
+    slug: 'wanna-be-yours',
+    name: 'I Wanna Be Yours',
+    type: 'Oversized Tee',
+    category: 'Music',
+    tagline: 'Secrets I have held in my heart.',
+    accent: '#E8C39E',
+    story: [ // DRAFT
+      'The song everyone has sent to someone at 2 a.m. On the front, the title and its soundwave, quiet. On the back, a silhouette made entirely out of the lyrics.',
+      'For the ones who say it with a playlist instead of out loud.',
     ],
-    images: [],
+    details: [['Fit', 'Oversized'], ['Colour', 'Black'], ['Print', 'Front & back'], ['Edition', 'Limited run']],
+    images: ['/designs/wanna-be-yours/front.webp', '/designs/wanna-be-yours/back.webp'],
+  },
+  {
+    slug: 'inner-peace',
+    name: 'Inner Peace',
+    type: 'Oversized Tee',
+    category: 'Anime',
+    tagline: 'Big face up front. Kung fu in the back.',
+    accent: '#8CC084',
+    story: [ // DRAFT
+      'The front is pure joke — a giant, slightly unimpressed face that fills the whole chest. The back is the opposite: a dragon and a warrior, drawn in one calm brushstroke.',
+      'Wear it to be funny. Get asked about the back.',
+    ],
+    details: [['Fit', 'Oversized'], ['Colour', 'White'], ['Print', 'Front & back'], ['Edition', 'Limited run']],
+    images: ['/designs/inner-peace/front.webp', '/designs/inner-peace/back.webp'],
+  },
+  {
+    slug: 'quattro',
+    name: 'Quattro',
+    type: 'Oversized Tee',
+    category: 'Motorsport',
+    tagline: 'Snow, gravel, four wheels, no fear.',
+    accent: '#E9C46A',
+    story: [ // DRAFT
+      'The car that changed rallying, flying off the chest on puppet strings. On the back, a full editorial spread — the legend, the specs, the car sliding through snow.',
+      'Printed in a single ink on butter-yellow, like a page from an old motorsport annual.',
+    ],
+    details: [['Fit', 'Oversized'], ['Colour', 'Butter'], ['Print', 'Front & back'], ['Edition', 'Limited run']],
+    images: ['/designs/quattro/front.webp', '/designs/quattro/back.webp'],
   },
 ]
+
+export const featured = (() => {
+  const picked = designs.filter((d) => d.featured).slice(0, 3)
+  return picked.length ? picked : designs.slice(0, 3)
+})()
 
 // Wrap a word in *asterisks* to set it in the italic accent serif.
 export const manifesto =
