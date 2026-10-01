@@ -136,8 +136,10 @@ async function runLoader() {
   if (hero) tl.to(hero.uniforms.uIntro, { value: 1, duration: 2.4, ease: 'power2.out' }, 0.35)
   else tl.from('.hero__fallback', { opacity: 0, scale: 1.1, duration: 1.4, ease: 'expo.out' }, 0.4)
 
+  // masks get room for descenders (the g in "edge"), and are removed once the lines are in
   const lede = SplitText.create('.hero__lede', { type: 'lines', mask: 'lines' })
-  tl.from(lede.lines, { yPercent: 110, duration: 1.2, stagger: 0.08, ease: 'expo.out' }, 0.9)
+  lede.masks.forEach((m) => Object.assign(m.style, { padding: '0.12em 0.1em 0.28em', margin: '-0.12em -0.1em -0.28em' }))
+  tl.from(lede.lines, { yPercent: 110, duration: 1.2, stagger: 0.08, ease: 'expo.out', onComplete: () => lede.revert() }, 0.9)
     .from('.hero__cta', { scale: 0, rotate: -180, duration: 1.2, ease: 'expo.out' }, 1.1)
     .fromTo('.nav', { yPercent: -100 }, { yPercent: 0, duration: 1, ease: 'expo.out', clearProps: 'transform' }, 1)
     .from('.hero__shop', { y: 20, opacity: 0, duration: 1, ease: 'expo.out' }, 1.15)
@@ -320,7 +322,8 @@ function initScroll() {
       onUpdate: (s) => (hero.uniforms.uScroll.value = s.progress),
     })
   }
-  gsap.to('.hero__bottom', { yPercent: -60, opacity: 0, ease: 'none', scrollTrigger: { trigger: '.hero', start: 'top top', end: '60% top', scrub: true } })
+  // animate the pieces, not .hero__bottom: a transformed parent would stop the tagline's blend from reaching the logo
+  gsap.to('.hero__lede, .hero__shop, .hero__cta', { y: -90, opacity: 0, ease: 'none', scrollTrigger: { trigger: '.hero', start: 'top top', end: '60% top', scrub: true } })
 
   gsap.from('.drop__title .line-mask > *', { yPercent: 115, rotate: 3, duration: 1.3, stagger: 0.12, ease: 'expo.out', scrollTrigger: { trigger: '.drop__title', start: 'top 85%' } })
 
@@ -337,8 +340,10 @@ function initScroll() {
   })
 
   gsap.from('.foot__mark img, .foot__info li', { y: 30, opacity: 0, duration: 1, stagger: 0.06, ease: 'expo.out', scrollTrigger: { trigger: '.foot', start: 'top 92%' } })
-  gsap.from('.tape--a', { rotate: -12, ease: 'none', scrollTrigger: { trigger: '.tapes', start: 'top bottom', end: 'bottom top', scrub: true } })
-  gsap.from('.tape--b', { rotate: 12, ease: 'none', scrollTrigger: { trigger: '.tapes', start: 'top bottom', end: 'bottom top', scrub: true } })
+  // the tapes sit on the seam between hero and showroom; they swing as that seam crosses the screen
+  const seam = { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: true }
+  gsap.fromTo('.tape--a', { rotate: -3.5 }, { rotate: -9, ease: 'none', scrollTrigger: seam })
+  gsap.fromTo('.tape--b', { rotate: 3 }, { rotate: 8, ease: 'none', scrollTrigger: { ...seam } })
 
 }
 
