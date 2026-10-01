@@ -1,8 +1,12 @@
 // /admin — edit designs, showroom, contact details and team.
-// Every save publishes straight away (PUT /api/content); images are processed
-// in the browser and uploaded to /api/upload.
+// Data lives in Supabase (tables designs / settings / team, images in the
+// "media" storage bucket). Sign-in is a Supabase account that's listed in
+// public.admins; row-level security enforces that on the server.
+// Every save publishes straight away; images are processed in the browser.
 import './admin.css'
+import { createClient } from '@supabase/supabase-js'
 import * as D from '../content.defaults.js'
+import { SUPABASE_URL, SUPABASE_KEY } from '../supabase.config.js'
 import { loadImage, splitMockup, singleView, alignPrint, garmentColour, portrait, toWebp } from './process.js'
 
 const $ = (s, r = document) => r.querySelector(s)
@@ -11,21 +15,30 @@ const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '
 const slugify = (s) => String(s).toLowerCase().normalize('NFKD').replace(/[^\w\s-]/g, '').trim().replace(/[\s_]+/g, '-').replace(/-+/g, '-').slice(0, 48) || 'design'
 const app = $('#app')
 
-/* ───────── API ───────── */
+/* ───────── Supabase ───────── */
 
-let token = sessionStorage.getItem('edge-admin') || ''
-async function api(path, opts = {}) {
-  const res = await fetch(path, { ...opts, headers: { ...(opts.headers || {}), ...(token ? { authorization: `Bearer ${token}` } : {}) } })
-  if (res.status === 401 && path !== '/api/login') { logout(); throw new Error('Signed out — please log in again') }
-  const body = (res.headers.get('content-type') || '').includes('json') ? await res.json() : await res.text()
-  if (!res.ok) throw new Error(body?.error || `Request failed (${res.status})`)
-  return body
+const db = createClient(SUPABASE_URL, SUPABASE_KEY)
+const MEDIA = `${SUPABASE_URL}/storage/v1/object/public/media/`
+
+// friendlier wording for the errors people will actually hit
+function explain(err) {
+  const m = err?.message || String(err)
+  if (/row-level security|permission denied|violates.*policy/i.test(m)) return 'This account isn’t allowed to edit the site.'
+  if (/Invalid login credentials/i.test(m)) return 'Wrong email or password.'
+  if (/relation .* does not exist|Could not find the (table|function)/i.test(m)) return 'The database isn’t set up yet — run supabase/migrations/0001_site_content.sql.'
+  if (/Failed to fetch|NetworkError/i.test(m)) return 'No connection — check your internet and try again.'
+  return m
 }
+const must = ({ data, error }) => { if (error) throw new Error(explain(error)); return data }
+
 async function upload(blob, name) {
-  const { url } = await api(`/api/upload?name=${encodeURIComponent(name)}`, { method: 'POST', headers: { 'content-type': blob.type }, body: blob })
-  return url
+  const ext = (blob.type.split('/')[1] || 'webp').replace('jpeg', 'jpg')
+  const path = `${name}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}.${ext}`
+  must(await db.storage.from('media').upload(path, blob, { contentType: blob.type, cacheControl: '31536000', upsert: false }))
+  return db.storage.from('media').getPublicUrl(path).data.publicUrl
 }
-const removeMedia = (url) => (url?.startsWith('/media/') ? api(`/api/upload?url=${encodeURIComponent(url)}`, { method: 'DELETE' }).catch(() => {}) : null)
+// only our own uploads are removed — built-in images in /public are left alone
+const removeMedia = (url) => (url?.startsWith(MEDIA) ? db.storage.from('media').remove([decodeURIComponent(url.slice(MEDIA.length))]).catch(() => {}) : null)
 
 let toastTimer
 function toast(msg, err = false) {
@@ -40,60 +53,108 @@ function toast(msg, err = false) {
 /* ───────── Data ───────── */
 
 let data = null
+let starter = false // true while Supabase is empty and we're showing the built-in content
 async function loadData() {
-  try {
-    data = await api('/api/content')
-  } catch {
-    data = null
-  }
-  if (!data || !Array.isArray(data.designs)) {
-    // first visit: start from the built-in content
+  const [d, t, s] = await Promise.all([
+    db.from('designs').select('*').order('position'),
+    db.from('team').select('*').order('position'),
+    db.from('settings').select('*').eq('id', 1).maybeSingle(),
+  ])
+  const rows = must(d)
+  starter = rows.length === 0
+  if (starter) {
     data = {
       brand: { ...D.brand },
-      designs: structuredClone(D.designs),
+      designs: structuredClone(D.designs).map(({ featured, ...x }) => x),
       team: structuredClone(D.team),
-      showroom: D.featured.map((d) => d.slug),
+      showroom: D.featured.map((x) => x.slug),
     }
-    data.designs.forEach((d) => delete d.featured)
+  } else {
+    const settings = must(s)
+    data = {
+      brand: { ...D.brand, ...(settings?.brand || {}) },
+      designs: rows,
+      team: must(t),
+      showroom: settings?.showroom || [],
+    }
   }
-  data.showroom ||= data.designs.filter((d) => d.featured).slice(0, 3).map((d) => d.slug)
 }
+
+// Write everything (it's a handful of rows) — simplest way to keep order, showroom and team in sync.
 async function publish(msg = 'Published — live on the site') {
-  await api('/api/content', { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify(data) })
+  const now = new Date().toISOString()
+  const designs = data.designs.map((x, i) => ({
+    slug: x.slug, position: i, name: x.name, type: x.type || null, category: x.category || null, tagline: x.tagline || null,
+    accent: x.accent || '#ff4a1c', garment: x.garment || null, model: x.model === 'card' ? 'card' : 'tee',
+    story: x.story || [], details: x.details || [], images: x.images || [], prints: x.prints || null,
+    published: x.published !== false, updated_at: now,
+  }))
+  const team = data.team.map((m, i) => ({
+    id: (m.id ||= crypto.randomUUID()), position: i, name: m.name, role: m.role || null, line: m.line || null,
+    photo: m.photo || null, instagram: m.instagram || null,
+  }))
+  if (designs.length) must(await db.from('designs').upsert(designs))
+  must(await db.from('settings').upsert({ id: 1, brand: data.brand, showroom: data.showroom.filter(Boolean), updated_at: now }))
+  if (team.length) must(await db.from('team').upsert(team))
+  // people removed in the Team tab
+  const keep = team.map((m) => m.id)
+  must(await (keep.length ? db.from('team').delete().not('id', 'in', `(${keep.join(',')})`) : db.from('team').delete().not('id', 'is', null)))
+  starter = false
   toast(msg)
 }
+const deleteDesignRow = async (slug) => must(await db.from('designs').delete().eq('slug', slug))
 
 /* ───────── Login ───────── */
 
-function logout() {
-  token = ''
-  sessionStorage.removeItem('edge-admin')
+async function logout() {
+  await db.auth.signOut()
   renderLogin()
 }
 
-function renderLogin(error = '') {
-  app.innerHTML = `
-    <div class="login">
-      <img src="/brand/edge-mark.png" alt="EDGE" />
-      <h1>Edge <em>admin</em></h1>
-      <form>
-        <label class="f"><span>Password</span><input type="password" name="password" autocomplete="current-password" required autofocus /></label>
-        <button class="b b--primary" type="submit">Sign in</button>
-        <p class="err">${esc(error)}</p>
-      </form>
-    </div>`
+function loginShell(inner) {
+  app.innerHTML = `<div class="login"><img src="/brand/edge-mark.png" alt="EDGE" /><h1>Edge <em>admin</em></h1>${inner}</div>`
+}
+
+function renderLogin(error = '', note = '') {
+  loginShell(`
+    <form data-form="login">
+      <label class="f"><span>Email</span><input type="email" name="email" autocomplete="username" required autofocus /></label>
+      <label class="f"><span>Password</span><input type="password" name="password" autocomplete="current-password" required /></label>
+      <button class="b b--primary" type="submit">Sign in</button>
+      <button class="b" type="button" data-act="forgot">Forgot password?</button>
+      <p class="err">${esc(error)}</p>${note ? `<p class="muted">${esc(note)}</p>` : ''}
+    </form>`)
+  const form = $('form', app)
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault()
+    const btn = $('button[type=submit]', form)
+    btn.disabled = true
+    const { error: err } = await db.auth.signInWithPassword({ email: form.email.value.trim(), password: form.password.value })
+    if (err) return renderLogin(explain(err))
+    start().catch((x) => renderLogin(explain(x)))
+  })
+  $('[data-act="forgot"]', form).addEventListener('click', async () => {
+    const email = form.email.value.trim()
+    if (!email) return renderLogin('Type your email first, then press “Forgot password?”.')
+    const { error: err } = await db.auth.resetPasswordForEmail(email, { redirectTo: `${location.origin}/admin` })
+    renderLogin(err ? explain(err) : '', err ? '' : 'If that email has an account, a reset link is on its way.')
+  })
+}
+
+// arriving from the reset email: choose a new password
+function renderNewPassword(error = '') {
+  loginShell(`
+    <form>
+      <label class="f"><span>New password</span><input type="password" name="password" autocomplete="new-password" minlength="8" required autofocus /></label>
+      <button class="b b--primary" type="submit">Save new password</button>
+      <p class="err">${esc(error)}</p>
+    </form>`)
   $('form', app).addEventListener('submit', async (e) => {
     e.preventDefault()
-    const btn = $('button', e.target)
-    btn.disabled = true
-    try {
-      const res = await api('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ password: e.target.password.value }) })
-      token = res.token
-      sessionStorage.setItem('edge-admin', token)
-      await start()
-    } catch (err) {
-      renderLogin(err.message)
-    }
+    const { error: err } = await db.auth.updateUser({ password: e.target.password.value })
+    if (err) return renderNewPassword(explain(err))
+    toast('Password changed')
+    start()
   })
 }
 
@@ -128,6 +189,7 @@ function renderDesigns(main) {
       <div><h2>Designs</h2><p>Everything listed here appears on the Collection page, in this order (newest first). Changes go live as soon as you save.</p></div>
       <button class="b b--primary" data-act="new">+ New design</button>
     </div>
+    ${starter ? `<div class="card"><p><b>The database is empty</b> — these are the designs built into the site. Copy them into Supabase to start editing.</p><div><button class="b b--primary" data-act="import">Copy into Supabase</button></div></div>` : ''}
     <div class="list">
       ${data.designs.map((d, i) => `
         <div class="row" data-i="${i}">
@@ -145,6 +207,10 @@ function renderDesigns(main) {
         </div>`).join('')}
     </div>`
   $('[data-act="new"]', main).addEventListener('click', () => openEditor(null))
+  $('[data-act="import"]', main)?.addEventListener('click', async (e) => {
+    e.currentTarget.disabled = true
+    try { await publish('Built-in designs copied into Supabase'); renderShell() } catch (err) { toast(err.message, true); e.currentTarget.disabled = false }
+  })
   $$('.row', main).forEach((row) => {
     const i = +row.dataset.i
     row.addEventListener('click', async (e) => {
@@ -164,6 +230,7 @@ function renderDesigns(main) {
         data.showroom = data.showroom.filter((s) => s !== d.slug)
         renderShell()
         try {
+          if (!starter) await deleteDesignRow(d.slug)
           await publish(`Deleted ${d.name}`)
           ;[...(d.images || []), d.prints?.front, d.prints?.back].forEach(removeMedia)
         } catch (err) { toast(err.message, true) }
@@ -425,7 +492,7 @@ function renderTeam(main) {
     const m = data.team[+el.dataset.i]
     $$('[data-k]', el).forEach((inp) => (m[inp.dataset.k] = inp.value.trim().replace(inp.dataset.k === 'instagram' ? /^@/ : /$^/, '')))
   })
-  $('[data-act="add"]', main).addEventListener('click', () => { sync(); data.team.push({ name: '', role: '', line: '' }); renderTeam(main) })
+  $('[data-act="add"]', main).addEventListener('click', () => { sync(); data.team.push({ id: crypto.randomUUID(), name: '', role: '', line: '' }); renderTeam(main) })
   $('[data-act="save"]', main).addEventListener('click', async () => {
     sync()
     data.team = data.team.filter((m) => m.name)
@@ -461,8 +528,24 @@ function renderTeam(main) {
 
 async function start() {
   app.innerHTML = '<div class="login"><p class="mono muted">Loading…</p></div>'
+  const { data: { user } } = await db.auth.getUser()
+  if (!user) return renderLogin()
+  const me = await db.from('admins').select('user_id').eq('user_id', user.id).maybeSingle()
+  if (me.error) throw new Error(explain(me.error))
+  if (!me.data) {
+    await db.auth.signOut()
+    return renderLogin(`${user.email} isn’t an admin. Ask whoever runs the Supabase project to add it.`)
+  }
   await loadData()
   renderShell()
 }
-if (token) start().catch(() => renderLogin())
-else renderLogin()
+
+let recovering = false
+db.auth.onAuthStateChange((event) => {
+  if (event === 'PASSWORD_RECOVERY') { recovering = true; renderNewPassword() }
+})
+db.auth.getSession().then(({ data: { session } }) => {
+  if (recovering) return
+  if (session) start().catch((err) => renderLogin(explain(err)))
+  else renderLogin()
+})

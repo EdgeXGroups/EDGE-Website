@@ -23,7 +23,7 @@ The nav, menu and footer for all pages are built in `src/chrome.js` — edit lin
 Tapping any design opens its story (front/back gallery, story, details). Each story has its own link, e.g. `/#/drop/rising` or `/collection.html#/drop/quattro`.
 
 ## Admin — editing the site (`/admin`)
-Designs, the showroom, contact details and the team are edited at **yoursite.com/admin**, behind a password. Saving publishes immediately — no rebuild.
+Designs, the showroom, contact details and the team are edited at **yoursite.com/admin**. Saving publishes immediately — no rebuild.
 
 - **Designs:** add (upload the front+back mockup; the Figma print export is optional and powers the 3D tee), edit text/colours, reorder, delete.
   Images are processed in the browser: the mockup is split, plain backgrounds removed, the print lined up automatically.
@@ -31,14 +31,19 @@ Designs, the showroom, contact details and the team are edited at **yoursite.com
 - **Contact:** Instagram, email, phone, WhatsApp, location, tagline, drop name.
 - **Team:** names, roles, lines, photos.
 
-**One-time setup on Netlify:** Site configuration → Environment variables → add
-`ADMIN_PASSWORD` (a long password) and `ADMIN_SECRET` (any long random string), then redeploy.
-Content and uploads are stored in Netlify Blobs (built in, nothing to set up). Change the password any time by editing the variable and redeploying — that also signs everyone out.
+### Where the data lives — Supabase
+Project `vpjntbsednknihxgntje` (account edgexgroups@gmail.com). Tables `designs`, `settings`, `team`, `admins`; images in the public storage bucket `media`. Row-level security: anyone can read the site's content, only users listed in `admins` can change anything.
+The public site reads everything with one call to the `site_content()` function (`src/content.js`, plain fetch) and falls back to the built-in defaults in `src/content.defaults.js` if Supabase is unreachable or empty. The project URL and publishable key are in `src/supabase.config.js` — they're public by design. **Never** put the secret / service_role key in the front-end.
 
-**How it works:** `netlify/functions/api.mjs` (content, login, uploads) and `media.mjs` (serves uploads at `/media/…`).
-The site loads `/api/content` on top of the built-in defaults in `src/content.defaults.js`, so if the API is ever unreachable the site still works with the defaults.
+### One-time setup
+1. **Create the tables:** Supabase → SQL Editor → New query → paste `supabase/migrations/0001_site_content.sql` → Run.
+2. **Create the admin login:** Authentication → Users → Add user → Create new user (email + password, tick *Auto Confirm User*).
+3. **Make it an admin:** SQL Editor → run `supabase/migrations/0002_make_admin.sql` (edit the email in it first if needed).
+4. **Lock sign-ups:** Authentication → Sign In / Providers → turn off *Allow new users to sign up* (only admins you add by hand should exist).
+5. **Password-reset links:** Authentication → URL Configuration → set *Site URL* to the live site and add `https://<your-site>/admin` (and `http://localhost:5173/admin` for local testing) to *Redirect URLs*.
+6. Open `/admin`, sign in, press **Copy into Supabase** to move the 8 built-in designs into the database.
 
-**Locally:** `npx netlify-cli dev` → http://localhost:8888 (site + functions + /admin). Copy `.env.example` to `.env` and set a password. Plain `npm run dev` still works but has no admin/API.
+To add another admin later: create the user (step 2) and run 0002 with their email.
 
 ## Adding a new design without the admin
 The admin is the normal way. The scripts below do the same processing offline and write the files into the repo (then add the design to `src/content.defaults.js`):

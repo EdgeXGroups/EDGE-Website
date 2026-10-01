@@ -11,18 +11,6 @@
         "--strictPort"
       ],
       "port": 5173
-    },
-    {
-      "name": "edge-netlify",
-      "runtimeExecutable": "npx",
-      "runtimeArgs": [
-        "-y",
-        "netlify-cli@latest",
-        "dev",
-        "--offline",
-        "--no-open"
-      ],
-      "port": 8888
     }
   ]
 }
