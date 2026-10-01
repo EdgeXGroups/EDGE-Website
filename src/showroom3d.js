@@ -1,43 +1,48 @@
 // The 3D garments standing on the glass rim, drawn on top of the light.
 //
-// Tees use public/models/tee.glb (built by 3d/build_tee.py). Its UVs are a
-// 2:1 atlas: left half = front print area, right half = back, both 1 m
-// across. Until flat Figma prints exist, each design's front/back mockup
-// image is laid onto that atlas over its fabric colour.
+// Tees use public/models/tee.glb (made by 3d/build_from_glb.py from
+// "fish t-shirt" by Gleb Gubkin, CC BY 4.0 — credited in the footer). Its UVs
+// are a 2:1 atlas: left half = front print area, right half = back, 1 m
+// across each. tee.json carries the model's real measurements.
+//
+// What gets printed on it, per design:
+//   prints  → flat Figma artwork (scripts/process-prints.py) on plain fabric
+//   images  → otherwise the front/back mockup photos, wrapped the same way
+// Both are framed like the mockups, so they land in the same place.
 // Anything without a model (the zip jacket) is a two-sided photo card.
 import {
   Scene, PerspectiveCamera, Group, Mesh, PlaneGeometry, MeshStandardMaterial, CanvasTexture, TextureLoader,
-  SpotLight, AmbientLight, DirectionalLight, SRGBColorSpace, DoubleSide, FrontSide, Color, MathUtils,
+  SpotLight, AmbientLight, DirectionalLight, SRGBColorSpace, DoubleSide, FrontSide, MathUtils,
 } from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js'
 
-const TEE_H = 0.764              // model height (m) — see public/models/tee.json
-const TEE_W = 0.95               // model width incl. sleeves
-const ATLAS = { w: 2048, h: 1024, pxPerM: 1024, top: 106, cxFront: 512, cxBack: 1536 }
-const MOCKUP = { w: 1200, h: 1500, top: 219, bottom: 1279 } // tee silhouette inside the mockup images
+let TEE_H = 0.76    // overwritten from public/models/tee.json
+let TEE_W = 0.71
+// texture atlas: 2:1, front print square on the left, back on the right
+const ATLAS = { w: 4096, h: 2048, pxPerM: 2560, hemY: 1843, cxFront: 1024, cxBack: 3072, bodyW: 0.516 }
+// where the tee's body sits inside the mockup / print frames (1200 x 1500 units, any resolution)
+const MOCKUP = { w: 1200, h: 1500, cx: 600, bodyW: 658, hem: 1280 }
+// art runs to the edge of the mockup's flat body; this tee's back curves near the armholes
+const PRINT_INSET = 0.9
 
 const loadImage = (src) => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src })
 
-// Lay the mockup images onto the UV atlas: same scale front and back, print undistorted.
-// Prefer real flat prints (made on the templates in 3d/templates): each one
-// fills its half of the atlas exactly. Otherwise fall back to the mockups.
 async function teeTexture(d, maxAniso) {
   const c = document.createElement('canvas')
   c.width = ATLAS.w; c.height = ATLAS.h
   const g = c.getContext('2d')
+  g.imageSmoothingQuality = 'high'
   g.fillStyle = d.garment || '#ddd'
   g.fillRect(0, 0, c.width, c.height)
-  if (d.prints) {
-    const [front, back] = await Promise.all([d.prints.front, d.prints.back].map((src) => (src ? loadImage(src) : null)))
-    if (front) g.drawImage(front, 0, 0, ATLAS.h, ATLAS.h)
-    if (back) g.drawImage(back, ATLAS.h, 0, ATLAS.h, ATLAS.h)
-  } else {
-    const [front, back] = await Promise.all(d.images.slice(0, 2).map(loadImage))
-    const k = (TEE_H * ATLAS.pxPerM) / (MOCKUP.bottom - MOCKUP.top)
-    const draw = (img, cx) => g.drawImage(img, cx - (MOCKUP.w * k) / 2, ATLAS.top - MOCKUP.top * k, MOCKUP.w * k, MOCKUP.h * k)
-    draw(front, ATLAS.cxFront)
-    if (back) draw(back, ATLAS.cxBack)
-  }
+  const srcs = d.prints ? [d.prints.front, d.prints.back] : d.images.slice(0, 2)
+  const [front, back] = await Promise.all(srcs.map((src) => (src ? loadImage(src) : null)))
+  // scale so the mockup's body width = the model's body width, hems aligned;
+  // the print keeps its proportions and stays on the torso
+  const k = (ATLAS.bodyW * ATLAS.pxPerM * PRINT_INSET) / MOCKUP.bodyW
+  const draw = (img, cx) => g.drawImage(img, cx - MOCKUP.cx * k, ATLAS.hemY - MOCKUP.hem * k, MOCKUP.w * k, MOCKUP.h * k)
+  if (front) draw(front, ATLAS.cxFront)
+  if (back) draw(back, ATLAS.cxBack)
   const t = new CanvasTexture(c)
   t.colorSpace = SRGBColorSpace
   t.flipY = false // glTF UVs run top-down, like the canvas
@@ -58,7 +63,20 @@ export async function createShowroom3D(spot, designs) {
   const fill = new DirectionalLight(0xffffff, 0.0)
   scene.add(ambient, key, key.target, rim, fill)
 
-  const gltf = await new GLTFLoader().loadAsync('/models/tee.glb')
+  const info = await fetch('/models/tee.json').then((r) => r.json())
+  TEE_H = info.height
+  TEE_W = info.width
+  // sharp but phone-safe: 4096 x 2048 on laptops, 3072 x 1536 on touch devices
+  const touch = matchMedia('(pointer: coarse)').matches
+  ATLAS.h = Math.min(renderer.capabilities.maxTextureSize / 2, touch ? 1536 : 2048)
+  ATLAS.w = ATLAS.h * 2
+  ATLAS.pxPerM = ATLAS.h / info.printSize
+  ATLAS.cxFront = ATLAS.h / 2
+  ATLAS.cxBack = ATLAS.h * 1.5
+  ATLAS.hemY = (1 - ((info.hemZ - info.printCenterZ) / info.printSize + 0.5)) * ATLAS.h
+  ATLAS.bodyW = info.bodyWidth
+  const draco = new DRACOLoader().setDecoderPath('/draco/')
+  const gltf = await new GLTFLoader().setDRACOLoader(draco).loadAsync('/models/tee.glb')
   let teeGeo = null
   gltf.scene.traverse((o) => { if (o.isMesh && !teeGeo) teeGeo = o.geometry })
   teeGeo.computeBoundingBox()

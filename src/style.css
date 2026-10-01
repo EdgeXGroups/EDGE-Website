@@ -402,3 +402,5 @@ body.menu-open .nav__logo img { filter: invert(1); }
   .grain, .hero__cta-ring, .dot { animation: none; }
   *, *::before, *::after { transition-duration: 0.01ms !important; }
 }
+.foot__credit { opacity: 0.6; text-transform: none; letter-spacing: 0.02em; }
+.foot__credit:hover { opacity: 1; }

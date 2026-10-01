@@ -16,11 +16,11 @@
  *  A design with no `images` gets a drawn placeholder mockup.
  *
  *  3D SHOWROOM: `model: 'tee'` puts the design on the 3D tee in the
- *  colour `garment`. For the sharpest result, design the artwork on the
- *  templates in 3d/templates (see README) and add
- *      prints: { front: '/prints/<slug>-front.png', back: '/prints/<slug>-back.png' },
- *  with the PNGs in /public/prints. Without `prints`, the mockup images
- *  are wrapped onto the tee instead.
+ *  colour `garment`. For a clean print (no mockup shading), export the
+ *  print layer from Figma (same frame as the mockup), register it in
+ *  scripts/process-prints.py, run it, and add
+ *      prints: { front: '/prints/<slug>-front.webp', back: '/prints/<slug>-back.webp' },
+ *  Without `prints`, the mockup images are wrapped onto the tee instead.
  *
  *  Stories marked DRAFT are placeholders — rewrite them in your
  *  own words.
@@ -74,7 +74,8 @@ export const designs = [
   },
   {
     slug: '70-kms',
-    model: 'tee', garment: '#f4f4f2',   // 3D showroom: tee model + fabric colour
+    model: 'tee', garment: '#ffffff',   // 3D showroom: tee model + fabric colour
+    prints: { front: '/prints/70-kms-front.webp', back: '/prints/70-kms-back.webp' }, // flat artwork from Figma
     name: '70 KMs Ain’t Enough',
     type: 'Oversized Tee',
     category: 'Originals',

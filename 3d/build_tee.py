@@ -1,5 +1,7 @@
 """
-Builds the EDGE oversized tee and exports public/models/tee.glb.
+Builds a simple generated oversized tee (public/models/tee-simple.glb).
+The site uses public/models/tee.glb from build_from_glb.py; this is the
+fallback if you ever need a model with no licence attached.
 
   "C:/Program Files/Blender Foundation/Blender 5.2/blender.exe" -b --factory-startup --python 3d/build_tee.py -- [--preview DIR]
 
@@ -196,13 +198,6 @@ for poly in me.polygons:
         else:
             uv.data[li].uv = (0.5 + (1 - u) * 0.5, v)  # mirrored: reads right way round from behind
 
-# outline of each print side, for the Figma templates (3d/make_templates.py)
-sides = {'front': [], 'back': []}
-for poly in me.polygons:
-    pts = [tuple(uv.data[li].uv) for li in poly.loop_indices]
-    sides['front' if poly.normal.y < 0 else 'back'].append(pts)
-with open(os.path.join(ROOT, '3d', 'tee_uv.json'), 'w') as f:
-    json.dump(sides, f)
 
 # fabric thickness + smooth shading
 m = tee.modifiers.new('thick', 'SOLIDIFY'); m.thickness = 0.004; m.offset = -1; m.use_rim = True
@@ -233,10 +228,10 @@ info = {
 print('TEE', json.dumps(info))
 
 bpy.ops.object.select_all(action='DESELECT'); tee.select_set(True)
-bpy.ops.export_scene.gltf(filepath=os.path.join(OUT, 'tee.glb'), export_format='GLB', use_selection=True,
+bpy.ops.export_scene.gltf(filepath=os.path.join(OUT, 'tee-simple.glb'), export_format='GLB', use_selection=True,
                           export_apply=True, export_yup=True, export_texcoords=True, export_normals=True,
                           export_materials='EXPORT')
-with open(os.path.join(OUT, 'tee.json'), 'w') as f:
+with open(os.path.join(OUT, 'tee-simple.json'), 'w') as f:
     json.dump(info, f, indent=2)
 
 # ── preview renders ──
