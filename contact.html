@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#070707" />
+  <title>Contact — EDGE</title>
+  <meta name="description" content="Ask about a design, a collab, or just say hi." />
+  <meta property="og:title" content="EDGE — Contact" />
+  <meta property="og:description" content="Ask about a design, a collab, or just say hi." />
+  <meta property="og:image" content="/brand/edge-wordmark.png" />
+  <link rel="icon" href="/brand/edge-mark.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+</head>
+<body class="page-sub" data-page="contact">
+  <div class="grain" aria-hidden="true"></div>
+  <div class="cursor" aria-hidden="true"><span class="cursor__label"></span></div>
+
+  <main id="top" class="sub">
+    <section class="sub__head">
+      <p class="mono eyebrow">Contact us</p>
+      <h1 class="display sub__title">Say <em class="serif">hello.</em></h1>
+      <p class="sub__intro">Asking about a design, sizing, a collab or a custom run for your hall or club — write to us. A real person on the team reads every message.</p>
+    </section>
+
+    <section class="contact">
+      <div class="contact__grid">
+        <form class="contact__form" novalidate>
+          <label><span class="mono">Your name</span><input name="name" autocomplete="name" required /></label>
+          <label><span class="mono">About</span><select name="topic"></select></label>
+          <label class="full"><span class="mono">Message</span><textarea name="message" rows="5" required></textarea></label>
+          <button type="submit" class="btn" data-magnetic><span>Send message</span></button>
+          <p class="mono contact__note">Opens your email app with everything filled in.</p>
+        </form>
+        <div>
+          <p class="mono eyebrow contact__alt">Or reach us directly</p>
+          <ul class="contact__links">
+            <li><a data-link="instagram" target="_blank" rel="noopener"><span class="mono">Instagram</span><b></b></a></li>
+            <li><a data-link="email"><span class="mono">Email</span><b></b></a></li>
+            <li data-if="whatsapp"><a data-link="whatsapp" target="_blank" rel="noopener"><span class="mono">WhatsApp</span><b>Message us</b></a></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="/src/contact.js"></script>
+</body>
+</html>

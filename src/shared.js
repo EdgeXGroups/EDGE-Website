@@ -1,5 +1,6 @@
 // Everything both pages (home + archive) share: smooth scroll, nav/menu,
 // cursor, page transitions, the design-story overlay and the lightbox.
+import './chrome.js' // must run before anything below queries the nav
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { SplitText } from 'gsap/SplitText'
@@ -191,7 +192,6 @@ function detailHTML(d) {
   const next = designs[(i + 1) % designs.length]
   const imgs = imagesFor(d)
   const words = d.name.split(' ')
-  const mail = links.email && `${links.email.href}?subject=${encodeURIComponent(`[EDGE] ${d.name}`)}&body=${encodeURIComponent(`Hey EDGE — I'd love to know more about ${d.name}.`)}`
   const views = ['Front', 'Back', 'Detail', 'Flat']
   return `
     <div class="d-layout">
@@ -210,7 +210,7 @@ function detailHTML(d) {
         <div class="d-story">${d.story.map((p) => `<p>${esc(p)}</p>`).join('')}</div>
         <dl class="d-specs mono">${d.details.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>
         <div class="d-actions">
-          ${mail ? `<a class="btn btn--accent" href="${mail}"><span>Ask about this piece</span></a>` : ''}
+          <a class="btn btn--accent" href="/contact.html?design=${d.slug}"><span>Ask about this piece</span></a>
           ${links.instagram ? `<a class="btn btn--ghost" href="${links.instagram.href}" target="_blank" rel="noopener"><span>DM on Instagram</span></a>` : ''}
         </div>
       </div>
@@ -345,14 +345,23 @@ lightbox.addEventListener('click', closeLightbox)
 
 /* ───────── Reveal helpers ───────── */
 
+// The masks get padding (cancelled by negative margin) so italic serif words
+// — tall ascenders, deep descenders, slanted overhang — aren't cut off, and
+// the split is undone once the reveal has played.
 export function riseLines(selector, opts = {}) {
   $$(selector).forEach((el) => {
+    let done = false
     SplitText.create(el, {
       type: 'lines', mask: 'lines', autoSplit: true,
-      onSplit: (self) => gsap.from(self.lines, {
-        yPercent: 115, rotate: 3, duration: 1.3, stagger: 0.1, ease: 'expo.out',
-        ...(opts.immediate ? { delay: opts.delay || 0 } : { scrollTrigger: { trigger: el, start: 'top 85%' } }),
-      }),
+      onSplit: (self) => {
+        if (done) return self.revert()
+        self.masks.forEach((m) => Object.assign(m.style, { padding: '0.2em 0.12em 0.3em', margin: '-0.2em -0.12em -0.3em' }))
+        return gsap.from(self.lines, {
+          yPercent: 115, rotate: 3, duration: 1.3, stagger: 0.1, ease: 'expo.out',
+          ...(opts.immediate ? { delay: opts.delay || 0 } : { scrollTrigger: { trigger: el, start: 'top 85%' } }),
+          onComplete: () => { done = true; self.revert() },
+        })
+      },
     })
   })
 }

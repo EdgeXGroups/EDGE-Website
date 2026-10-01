@@ -109,9 +109,9 @@ body.is-loading .loader { pointer-events: all; }
   height: var(--nav-h); padding: 0 var(--gutter); padding-top: env(safe-area-inset-top);
   display: flex; align-items: center; justify-content: space-between; gap: 16px;
   mix-blend-mode: difference;
-  transition: transform 0.6s var(--ease);
+  transition: translate 0.6s var(--ease);
 }
-.nav.is-hidden { transform: translateY(-110%); }
+.nav.is-hidden { translate: 0 -110%; }
 .nav__logo img { height: 30px; width: auto; }
 .nav__status { display: none; font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; align-items: center; gap: 8px; }
 .dot { width: 7px; height: 7px; border-radius: 50%; background: #fff; animation: pulse 1.6s ease-in-out infinite; }
@@ -144,7 +144,7 @@ body.is-loading .loader { pointer-events: all; }
 .menu__links { display: flex; flex-direction: column; }
 .menu__links a {
   display: flex; align-items: flex-start; gap: 12px; padding: 6px 0; border-bottom: 1px solid rgba(0, 0, 0, 0.2);
-  font-weight: 900; font-stretch: 125%; text-transform: uppercase; font-size: clamp(44px, 14vw, 88px); line-height: 0.95; letter-spacing: -0.03em;
+  font-weight: 900; font-stretch: 112%; text-transform: uppercase; font-size: clamp(36px, 11vw, 88px); line-height: 0.95; letter-spacing: -0.03em;
 }
 .menu__links a span { display: inline-block; transform: translateY(110%); transition: transform 0.9s var(--ease-out); }
 .menu__links a i { font-family: var(--f-mono); font-style: normal; font-size: 11px; font-weight: 500; letter-spacing: 0.1em; padding-top: 10px; }
@@ -200,8 +200,11 @@ body.menu-open .nav__logo img { filter: invert(1); }
 .drop { position: relative; padding: 72px 0 40px; }
 .drop__head { padding: 0 var(--gutter); display: grid; gap: 18px; margin-bottom: 40px; }
 .drop__title { font-size: clamp(52px, 17vw, 260px); display: flex; align-items: baseline; gap: 0.1em; white-space: nowrap; }
-.drop__title .line-mask { padding-right: 0.08em; }
+.drop__title .line-mask { padding: 0.22em 0.12em 0.3em 0; margin: -0.22em -0.12em -0.3em 0; }
 .drop__title .serif { display: inline-block; }
+/* "01" tucks into the P: pulled left over it and dropped below the baseline */
+.drop__title .line-mask + .line-mask { position: relative; z-index: 1; margin-left: -0.32em; }
+.drop__title .line-mask + .line-mask .serif { position: relative; top: 0.18em; }
 .drop__title .serif { color: var(--accent); }
 
 .drop__track { display: grid; gap: 0; padding: 0 var(--gutter); }

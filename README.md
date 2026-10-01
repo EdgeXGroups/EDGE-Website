@@ -13,9 +13,12 @@ Settings live in `netlify.toml` (build `npm run build`, publish `dist`, Node 22)
 - **Drag & drop:** run `npm run build` and drop the `dist` folder onto app.netlify.com/drop.
 
 ## Pages
-Two pages:
-- `/` — home: WebGL hero, the **spotlight** (newest design revealed in a beam of light as you scroll), 3 featured designs, why Edge, team, contact.
-- `/collection.html` — the **archive**: every design, filterable by category, grid or index view.
+- `/` — home: WebGL hero, the **spotlight** (newest design revealed in a beam of light as you scroll), 3 featured designs, what makes Edge different.
+- `/collection.html` — the **collection**: every design, filterable by category, grid or index view.
+- `/team.html` — the team, plus "how we work".
+- `/contact.html` — contact form (opens the visitor's email app) and direct links. `?design=<slug>` pre-selects a design; the story pages' "Ask about this piece" button uses this.
+
+The nav, menu and footer for all pages are built in `src/chrome.js` — edit links there once.
 
 Tapping any design opens its story (front/back gallery, story, details). Each story has its own link, e.g. `/#/drop/rising` or `/collection.html#/drop/quattro`.
 
@@ -23,7 +26,7 @@ Tapping any design opens its story (front/back gallery, story, details). Each st
 Everything the site says lives in **`src/content.js`**: brand info and contact links, the designs, the manifesto, the pillars and the team.
 
 - **Order / featured:** designs are listed newest first. Mark up to 3 with `featured: true` to show them on the home page (otherwise the first 3 are used). The first featured design stars in the spotlight.
-- **Stories marked `// DRAFT`** are placeholders — rewrite them.
+- **Stories marked `// DRAFT`** (and the team page's "how we work" list) are placeholders — rewrite them.
 
 ## Adding a new design
 1. Drop the raw image(s) into `/design` — either one front+back side-by-side image, or separate front and back photos.

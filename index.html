@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
 </head>
-<body class="is-loading">
+<body class="is-loading" data-page="home">
   <!-- ░░ Preloader ░░ -->
   <div class="loader" aria-hidden="true">
     <div class="loader__panel loader__panel--top"></div>
@@ -34,36 +34,6 @@
   <div class="grain" aria-hidden="true"></div>
   <div class="cursor" aria-hidden="true"><span class="cursor__label"></span></div>
 
-  <!-- ░░ Nav ░░ -->
-  <header class="nav">
-    <a href="#top" class="nav__logo" aria-label="EDGE — home">
-      <img src="/brand/edge-mark.png" alt="" />
-    </a>
-    <div class="nav__status"><span class="dot"></span><span data-brand="drop"></span>&nbsp;— live</div>
-    <nav class="nav__links" aria-label="Primary">
-      <a href="#drop" data-magnetic>Drop</a>
-      <a href="/collection.html" data-magnetic>Archive</a>
-      <a href="#different" data-magnetic>Why Edge</a>
-      <a href="#team" data-magnetic>Team</a>
-    </nav>
-    <button class="nav__burger" aria-label="Open menu" aria-expanded="false">
-      <span></span><span></span>
-    </button>
-  </header>
-
-  <div class="menu" aria-hidden="true">
-    <nav class="menu__links">
-      <a href="#drop"><i>01</i><span>Drop</span></a>
-      <a href="/collection.html"><i>02</i><span>Archive</span></a>
-      <a href="#different"><i>03</i><span>Why Edge</span></a>
-      <a href="#team"><i>04</i><span>Team</span></a>
-    </nav>
-    <div class="menu__foot">
-      <a data-link="instagram" target="_blank" rel="noopener">Instagram ↗</a>
-      <a data-link="email">Email ↗</a>
-    </div>
-  </div>
-
   <main id="top">
     <!-- ░░ Hero ░░ -->
     <section class="hero">
@@ -71,7 +41,10 @@
       <img class="hero__fallback" src="/brand/edge-wordmark.png" alt="" />
       <h1 class="sr-only">EDGE — clothing and merch</h1>
       <div class="hero__bottom">
-        <p class="hero__lede serif" data-brand="tagline"></p>
+        <div class="hero__left">
+          <p class="hero__lede serif" data-brand="tagline"></p>
+          <a href="/collection.html" class="btn hero__shop" data-magnetic><span>View the collection →</span></a>
+        </div>
         <a href="#drop" class="hero__cta" data-magnetic data-cursor="Scroll">
           <span class="hero__cta-ring"><svg viewBox="0 0 100 100"><defs><path id="c" d="M50,50 m-38,0 a38,38 0 1,1 76,0 a38,38 0 1,1 -76,0"/></defs><text><textPath href="#c">SEE THE DROP · SEE THE DROP · SEE THE DROP · </textPath></text></svg></span>
           <span class="hero__cta-arrow">↓</span>
@@ -122,41 +95,8 @@
       <ol class="pillars"></ol>
     </section>
 
-    <!-- ░░ Team ░░ -->
-    <section class="team" id="team">
-      <div class="team__head">
-        <p class="mono eyebrow">The people</p>
-        <h2 class="display">Small team.<br /><em class="serif">Loud</em> ideas.</h2>
-      </div>
-      <div class="team__grid"></div>
-    </section>
-
   </main>
 
-  <footer class="foot">
-    <div class="foot__mark"><img src="/brand/edge-wordmark.png" alt="EDGE" /></div>
-    <div class="foot__row mono">
-      <span>© <span class="year"></span> EDGE</span>
-      <span data-brand="city"></span>
-      <a data-link="instagram" target="_blank" rel="noopener">Instagram ↗</a>
-      <a data-link="email">Email ↗</a>
-      <a href="#top" data-magnetic>Back to top ↑</a>
-    </div>
-  </footer>
-
-  <!-- ░░ Design detail (opened via #/drop/<slug>) ░░ -->
-  <div class="detail" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Design details">
-    <div class="detail__wipe"></div>
-    <div class="detail__scroller" data-lenis-prevent>
-      <button class="detail__close" aria-label="Close" data-magnetic><span></span><span></span></button>
-      <div class="detail__content"></div>
-    </div>
-  </div>
-
-  <div class="lightbox" aria-hidden="true">
-    <img alt="" />
-    <button class="lightbox__close mono" aria-label="Close image">Close ✕</button>
-  </div>
 
   <script type="module" src="/src/main.js"></script>
 </body>

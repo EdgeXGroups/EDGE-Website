@@ -4,9 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#070707" />
-  <title>Archive — EDGE</title>
+  <title>Collection — EDGE</title>
   <meta name="description" content="Every EDGE design and the story behind it." />
-  <meta property="og:title" content="EDGE — The Archive" />
+  <meta property="og:title" content="EDGE — The Collection" />
   <meta property="og:description" content="Every design, every story." />
   <meta property="og:image" content="/brand/edge-wordmark.png" />
   <link rel="icon" href="/brand/edge-mark.png" />
@@ -14,42 +14,13 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
 </head>
-<body class="page-archive">
+<body class="page-archive" data-page="collection">
   <div class="grain" aria-hidden="true"></div>
   <div class="cursor" aria-hidden="true"><span class="cursor__label"></span></div>
 
-  <header class="nav">
-    <a href="/" class="nav__logo" aria-label="EDGE — home">
-      <img src="/brand/edge-mark.png" alt="" />
-    </a>
-    <div class="nav__status"><span class="dot"></span>Archive — <span data-count="designs"></span>&nbsp;designs</div>
-    <nav class="nav__links" aria-label="Primary">
-      <a href="/#drop" data-magnetic>Drop</a>
-      <a href="/collection.html" data-magnetic aria-current="page">Archive</a>
-      <a href="/#different" data-magnetic>Why Edge</a>
-      <a href="/#team" data-magnetic>Team</a>
-    </nav>
-    <button class="nav__burger" aria-label="Open menu" aria-expanded="false">
-      <span></span><span></span>
-    </button>
-  </header>
-
-  <div class="menu" aria-hidden="true">
-    <nav class="menu__links">
-      <a href="/#drop"><i>01</i><span>Drop</span></a>
-      <a href="#top"><i>02</i><span>Archive</span></a>
-      <a href="/#different"><i>03</i><span>Why Edge</span></a>
-      <a href="/#team"><i>04</i><span>Team</span></a>
-    </nav>
-    <div class="menu__foot">
-      <a data-link="instagram" target="_blank" rel="noopener">Instagram ↗</a>
-      <a data-link="email">Email ↗</a>
-    </div>
-  </div>
-
   <main id="top" class="archive">
     <section class="archive__head">
-      <p class="mono eyebrow">The archive</p>
+      <p class="mono eyebrow">The collection</p>
       <h1 class="display archive__title"><span>Every</span> <em class="serif">design</em><sup class="mono">(<span data-count="designs"></span>)</sup></h1>
       <p class="archive__intro">Every piece we’ve made, and the story behind each one. Tap any design to read it.</p>
     </section>
@@ -65,35 +36,12 @@
     <section class="archive__grid" data-view="grid"></section>
     <div class="archive__float" aria-hidden="true"><img alt="" /></div>
 
-    <a class="archive__cta" data-link="instagram" target="_blank" rel="noopener" data-cursor="DM us">
+    <a class="archive__cta" href="/contact.html" data-cursor="Say hi">
       <span class="mono eyebrow">Seen something you like?</span>
       <span class="display">Ask us <em class="serif">about it</em> →</span>
     </a>
   </main>
 
-  <footer class="foot">
-    <div class="foot__mark"><img src="/brand/edge-wordmark.png" alt="EDGE" /></div>
-    <div class="foot__row mono">
-      <span>© <span class="year"></span> EDGE</span>
-      <span data-brand="city"></span>
-      <a data-link="instagram" target="_blank" rel="noopener">Instagram ↗</a>
-      <a data-link="email">Email ↗</a>
-      <a href="#top" data-magnetic>Back to top ↑</a>
-    </div>
-  </footer>
-
-  <div class="detail" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Design details">
-    <div class="detail__wipe"></div>
-    <div class="detail__scroller" data-lenis-prevent>
-      <button class="detail__close" aria-label="Close" data-magnetic><span></span><span></span></button>
-      <div class="detail__content"></div>
-    </div>
-  </div>
-
-  <div class="lightbox" aria-hidden="true">
-    <img alt="" />
-    <button class="lightbox__close mono" aria-label="Close image">Close ✕</button>
-  </div>
 
   <script type="module" src="/src/collection.js"></script>
 </body>

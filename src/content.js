@@ -176,8 +176,17 @@ export const pillars = [
   },
 ]
 
+// Team page — "How we work". DRAFT: rewrite to match how you actually work.
+export const process = [
+  { title: 'Write it', body: 'Every design starts as a few lines of story before anyone opens a sketchbook.' },
+  { title: 'Draw it twice', body: 'The first version is for us. The second one is the one you see.' },
+  { title: 'Print a test', body: 'We wear the sample for a week. If it fades, shrinks or bores us, it doesn’t ship.' },
+  { title: 'Shoot & ship', body: 'Photographed, packed and sent by the same people who made it.' },
+]
+
 export const team = [
-  // Add `photo: '/team/name.jpg'` to show a real portrait.
+  // Add `photo: '/team/name.jpg'` to show a real portrait,
+  // and `instagram: 'handle'` to link their profile.
   { name: 'Founder Name', role: 'Founder & Creative Direction', line: 'Turns 3 a.m. thoughts into prints.' },
   { name: 'Team Member', role: 'Design', line: 'Draws everything twice. Keeps the second one.' },
   { name: 'Team Member', role: 'Production', line: 'Knows every GSM by touch.' },

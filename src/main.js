@@ -1,6 +1,6 @@
 import './style.css'
 import './pages.css'
-import { brand, designs, featured, manifesto, pillars, team } from './content.js'
+import { brand, designs, featured, manifesto, pillars } from './content.js'
 import { createHero } from './hero.js'
 import { createSpotlight } from './spotlight.js'
 import {
@@ -36,8 +36,8 @@ function buildCards() {
         </a>
       </article>`)
       .join('') +
-    `<a class="drop__end" href="/collection.html" data-cursor="Archive">
-      <span class="mono eyebrow">The archive</span>
+    `<a class="drop__end" href="/collection.html" data-cursor="Collection">
+      <span class="mono eyebrow">The collection</span>
       <span class="display drop__end-title">+${pad(more)}<br/><em class="serif">more</em><br/>designs</span>
       <span class="drop__end-stack">${designs.filter((d) => !featured.includes(d)).slice(0, 3).map((d) => `<span style="--m-accent:${d.accent}"><img src="${d.images?.[0] || ''}" alt="" loading="lazy"/></span>`).join('')}</span>
       <span class="btn"><span>View all ${pad(designs.length)} →</span></span>
@@ -56,18 +56,6 @@ function buildManifesto() {
       <h3 class="pillar__t"><span class="line-mask"><span>${esc(p.title)}</span></span></h3>
       <p class="pillar__b">${esc(p.body)}</p>
     </li>`)
-    .join('')
-}
-
-function buildTeam() {
-  $('.team__grid').innerHTML = team
-    .map((m) => `
-    <article class="member" data-cursor="Hi!">
-      <div class="member__photo">${m.photo ? `<img src="${m.photo}" alt="${esc(m.name)}" loading="lazy" />` : `<span class="member__mono" aria-hidden="true">${esc(m.name[0])}</span>`}</div>
-      <h3 class="member__name">${esc(m.name)}</h3>
-      <p class="mono member__role">${esc(m.role)}</p>
-      <p class="member__line">${esc(m.line)}</p>
-    </article>`)
     .join('')
 }
 
@@ -91,7 +79,6 @@ buildTapes()
 buildSpotlight()
 buildCards()
 buildManifesto()
-buildTeam()
 lenis?.stop()
 
 /* ───────── WebGL ───────── */
@@ -153,7 +140,8 @@ async function runLoader() {
   const lede = SplitText.create('.hero__lede', { type: 'lines', mask: 'lines' })
   tl.from(lede.lines, { yPercent: 110, duration: 1.2, stagger: 0.08, ease: 'expo.out' }, 0.9)
     .from('.hero__cta', { scale: 0, rotate: -180, duration: 1.2, ease: 'expo.out' }, 1.1)
-    .from('.nav', { yPercent: -100, duration: 1, ease: 'expo.out' }, 1)
+    .fromTo('.nav', { yPercent: -100 }, { yPercent: 0, duration: 1, ease: 'expo.out', clearProps: 'transform' }, 1)
+    .from('.hero__shop', { y: 20, opacity: 0, duration: 1, ease: 'expo.out' }, 1.15)
 }
 
 /* ───────── Tapes ───────── */
@@ -221,7 +209,6 @@ function initScroll() {
   }
   gsap.to('.hero__bottom', { yPercent: -60, opacity: 0, ease: 'none', scrollTrigger: { trigger: '.hero', start: 'top top', end: '60% top', scrub: true } })
 
-  riseLines('.team__head h2')
   gsap.from('.drop__title .line-mask > *', { yPercent: 115, rotate: 3, duration: 1.3, stagger: 0.12, ease: 'expo.out', scrollTrigger: { trigger: '.drop__title', start: 'top 85%' } })
 
 
@@ -236,7 +223,6 @@ function initScroll() {
       .from([$('.pillar__n', el), $('.pillar__b', el)], { opacity: 0, y: 16, duration: 0.8, stagger: 0.08, ease: 'expo.out' }, 0.45)
   })
 
-  gsap.from('.member', { y: 80, opacity: 0, duration: 1.2, stagger: 0.1, ease: 'expo.out', scrollTrigger: { trigger: '.team__grid', start: 'top 85%' } })
   gsap.from('.foot__mark img', { yPercent: 40, scale: 0.9, ease: 'none', scrollTrigger: { trigger: '.foot', start: 'top bottom', end: 'bottom bottom', scrub: true } })
   gsap.from('.tape--a', { rotate: -12, ease: 'none', scrollTrigger: { trigger: '.tapes', start: 'top bottom', end: 'bottom top', scrub: true } })
   gsap.from('.tape--b', { rotate: 12, ease: 'none', scrollTrigger: { trigger: '.tapes', start: 'top bottom', end: 'bottom top', scrub: true } })

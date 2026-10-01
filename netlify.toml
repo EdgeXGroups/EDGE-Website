@@ -28,8 +28,18 @@
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
 
-# Pretty URL for the archive: /collection → collection.html
+# Pretty URLs: /collection, /team, /contact
 [[redirects]]
   from = "/collection"
   to = "/collection.html"
+  status = 200
+
+[[redirects]]
+  from = "/team"
+  to = "/team.html"
+  status = 200
+
+[[redirects]]
+  from = "/contact"
+  to = "/contact.html"
   status = 200
