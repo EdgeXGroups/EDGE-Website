@@ -40,7 +40,7 @@ $$('.pillar').forEach((el) => {
     .from($('.pillar__t span span', el), { yPercent: 110, duration: 1.1, ease: 'expo.out' }, 0.3)
     .from([$('.pillar__n', el), $('.pillar__b', el)], { opacity: 0, y: 16, duration: 0.8, stagger: 0.08, ease: 'expo.out' }, 0.45)
 })
-gsap.from('.foot__mark img', { yPercent: 40, scale: 0.9, ease: 'none', scrollTrigger: { trigger: '.foot', start: 'top bottom', end: 'bottom bottom', scrub: true } })
+gsap.from('.foot__mark img, .foot__info li', { y: 30, opacity: 0, duration: 1, stagger: 0.06, ease: 'expo.out', scrollTrigger: { trigger: '.foot', start: 'top 92%' } })
 
 pageEnter()
 document.fonts.ready.then(() => ScrollTrigger.refresh())

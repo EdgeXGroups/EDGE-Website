@@ -44,17 +44,24 @@ const before = `
     </div>
   </div>`
 
+// Footer contact details — each row only shows when it's filled in content.js
+const digits = (brand.phone || '').replace(/[^\d+]/g, '')
+const rows = [
+  brand.instagram && ['Instagram', `<a href="https://instagram.com/${brand.instagram}" target="_blank" rel="noopener">@${brand.instagram}</a>`],
+  brand.email && ['Email', `<a href="mailto:${brand.email}">${brand.email}</a>`],
+  brand.location && ['Location', `<span>${brand.location}</span>`],
+  brand.phone && ['Phone', digits.length >= 10 ? `<a href="tel:${digits}">${brand.phone}</a>` : `<span>${brand.phone}</span>`],
+].filter(Boolean)
+const info = rows.map(([k, v]) => `<li><span class="mono">${k}</span>${v}</li>`).join('')
+
 const after = `
   <footer class="foot">
-    <nav class="foot__nav" aria-label="Footer">
-      ${LINKS.map(([l, h]) => `<a href="${h}" class="foot__link">${l}</a>`).join('')}
-    </nav>
-    <div class="foot__mark"><img src="/brand/edge-wordmark.png" alt="EDGE" /></div>
+    <div class="foot__main">
+      <a href="${home ? '#top' : '/'}" class="foot__mark" aria-label="EDGE — home"><img src="/brand/edge-wordmark.png" alt="EDGE" /></a>
+      <ul class="foot__info">${info}</ul>
+    </div>
     <div class="foot__row mono">
       <span>© <span class="year"></span> EDGE</span>
-      <span data-brand="city"></span>
-      <a data-link="instagram" target="_blank" rel="noopener">Instagram ↗</a>
-      <a data-link="email">Email ↗</a>
       <a href="#top" data-magnetic>Back to top ↑</a>
     </div>
   </footer>

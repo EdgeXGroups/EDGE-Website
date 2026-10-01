@@ -18,7 +18,7 @@ const vert = /* glsl */ `
 const frag = /* glsl */ `
   precision highp float;
   varying vec2 vUv;
-  uniform float uT, uTime;
+  uniform float uT, uTime, uPulse;
   uniform vec2 uRes, uMouse;
   uniform vec3 uAccent;
   uniform float uApY, uRimY;
@@ -93,7 +93,7 @@ const frag = /* glsl */ `
                  * smoothstep(uApY + .004, uApY - .02, p.y)
                  * smoothstep(rimCurveHere - .05, rimCurveHere + .005, p.y);
     vec3 beam = vec3(.7, .8, 1.) * (lateral * mix(.85, .3, u) + coreLine * .9) * air;
-    c += beam * inBeam * beamOn;
+    c += beam * inBeam * beamOn * (1. + uPulse * .9);
 
     // dust drifting in the beam
     float dustOn = ease(.46, .56, T);
@@ -129,7 +129,7 @@ const frag = /* glsl */ `
       + vec3(.35, .55, 1.) * g((edge + .006) / .003) * .45
       + mix(vec3(1., .55, .35), uAccent, .5) * g((edge + .013) / .004) * .3
       + vec3(.25, .35, .6) * g((edge + .024) / .006) * .18;
-    float flash = 1. + 1.4 * g((T - .585) / .018);
+    float flash = 1. + 1.4 * g((T - .585) / .018) + uPulse * 1.2;
     c += rim * fall * hot * rimOn * flash;
     // glass body catching the beam below the rim
     float body = step(edge, 0.) * exp(edge * 7.) * exp(-pow(x / (bw * 1.3), 2.));
@@ -166,6 +166,7 @@ export function createSpotlight(canvas, { accent = '#ffffff', apertureY = 0.34, 
     uAccent: { value: new Color(accent) },
     uApY: { value: apertureY },
     uRimY: { value: rimY },
+    uPulse: { value: 0 },
   }
   scene.add(new Mesh(new PlaneGeometry(2, 2), new ShaderMaterial({ vertexShader: vert, fragmentShader: frag, uniforms })))
 
@@ -194,8 +195,17 @@ export function createSpotlight(canvas, { accent = '#ffffff', apertureY = 0.34, 
     if (!visible || document.hidden) return
     uniforms.uTime.value += dt
     uniforms.uMouse.value.lerp(target, 1 - Math.pow(0.02, dt))
+    renderer.autoClear = !layers.length
     renderer.render(scene, camera)
+    for (const l of layers) {
+      l.tick?.(dt)
+      renderer.clearDepth()
+      renderer.render(l.scene, l.camera)
+    }
   }
   requestAnimationFrame(frame)
-  return { uniforms, resize }
+  // extra scenes drawn on top of the light (the 3D garments)
+  const layers = []
+  const add = (layer) => layers.push(layer)
+  return { uniforms, resize, renderer, add, canvas }
 }

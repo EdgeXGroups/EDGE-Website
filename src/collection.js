@@ -107,7 +107,7 @@ ScrollTrigger.batch(items, {
   start: 'top 92%', once: true,
   onEnter: (els) => gsap.fromTo(els, { y: 70, opacity: 0, clipPath: 'inset(20% 0% 0% 0%)' }, { y: 0, opacity: 1, clipPath: 'inset(0% 0% 0% 0%)', duration: 1.1, stagger: 0.08, ease: 'expo.out', overwrite: true }),
 })
-gsap.from('.foot__mark img', { yPercent: 40, scale: 0.9, ease: 'none', scrollTrigger: { trigger: '.foot', start: 'top bottom', end: 'bottom bottom', scrub: true } })
+gsap.from('.foot__mark img, .foot__info li', { y: 30, opacity: 0, duration: 1, stagger: 0.06, ease: 'expo.out', scrollTrigger: { trigger: '.foot', start: 'top 92%' } })
 
 pageEnter()
 document.fonts.ready.then(() => ScrollTrigger.refresh())

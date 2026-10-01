@@ -15,6 +15,13 @@
  *  That writes /public/designs/<slug>/front.webp + back.webp.
  *  A design with no `images` gets a drawn placeholder mockup.
  *
+ *  3D SHOWROOM: `model: 'tee'` puts the design on the 3D tee in the
+ *  colour `garment`. For the sharpest result, design the artwork on the
+ *  templates in 3d/templates (see README) and add
+ *      prints: { front: '/prints/<slug>-front.png', back: '/prints/<slug>-back.png' },
+ *  with the PNGs in /public/prints. Without `prints`, the mockup images
+ *  are wrapped onto the tee instead.
+ *
  *  Stories marked DRAFT are placeholders — rewrite them in your
  *  own words.
  */
@@ -28,11 +35,14 @@ export const brand = {
   instagram: 'edge.studio',            // ← handle without @
   whatsapp: '',                        // ← e.g. '919999999999' (country code, no +). Empty = hidden
   city: 'India',
+  location: 'India',                   // ← shown in the footer, e.g. 'Kharagpur, India'
+  phone: '+91 XXXXX XXXXX',            // ← shown in the footer; becomes tappable once it's a real number. Empty = hidden
 }
 
 export const designs = [
   {
     slug: 'rising',
+    model: 'card',                  // 3D showroom: shown as a two-sided photo (no jacket model yet)
     name: 'Rising',
     type: 'Fleece Zip Jacket',
     category: 'Originals',
@@ -48,6 +58,7 @@ export const designs = [
   },
   {
     slug: 'never-retreat',
+    model: 'tee', garment: '#536053',   // 3D showroom: tee model + fabric colour
     name: 'Never Retreat',
     type: 'Oversized Tee',
     category: 'Anime',
@@ -63,6 +74,7 @@ export const designs = [
   },
   {
     slug: '70-kms',
+    model: 'tee', garment: '#f4f4f2',   // 3D showroom: tee model + fabric colour
     name: '70 KMs Ain’t Enough',
     type: 'Oversized Tee',
     category: 'Originals',
@@ -78,6 +90,7 @@ export const designs = [
   },
   {
     slug: 'dragon-drift',
+    model: 'tee', garment: '#f6f2e6',   // 3D showroom: tee model + fabric colour
     name: 'Dragon Drift',
     type: 'Oversized Tee',
     category: 'Motorsport',
@@ -92,6 +105,7 @@ export const designs = [
   },
   {
     slug: 'saiyan-at-rest',
+    model: 'tee', garment: '#e8e8e6',   // 3D showroom: tee model + fabric colour
     name: 'Saiyan at Rest',
     type: 'Oversized Tee',
     category: 'Anime',
@@ -106,6 +120,7 @@ export const designs = [
   },
   {
     slug: 'wanna-be-yours',
+    model: 'tee', garment: '#141414',   // 3D showroom: tee model + fabric colour
     name: 'I Wanna Be Yours',
     type: 'Oversized Tee',
     category: 'Music',
@@ -120,6 +135,7 @@ export const designs = [
   },
   {
     slug: 'inner-peace',
+    model: 'tee', garment: '#e8e8e6',   // 3D showroom: tee model + fabric colour
     name: 'Inner Peace',
     type: 'Oversized Tee',
     category: 'Anime',
@@ -134,6 +150,7 @@ export const designs = [
   },
   {
     slug: 'quattro',
+    model: 'tee', garment: '#ebdcb1',   // 3D showroom: tee model + fabric colour
     name: 'Quattro',
     type: 'Oversized Tee',
     category: 'Motorsport',

@@ -39,7 +39,7 @@ initCursor()
 riseLines('.sub__title', { immediate: true, delay: 0.25 })
 gsap.from('.sub__head .eyebrow, .sub__intro', { y: 30, opacity: 0, duration: 1, stagger: 0.08, ease: 'expo.out', delay: 0.4 })
 gsap.from('.contact__form > *, .contact__alt, .contact__links li', { y: 30, opacity: 0, duration: 0.9, stagger: 0.05, ease: 'expo.out', delay: 0.6 })
-gsap.from('.foot__mark img', { yPercent: 40, scale: 0.9, ease: 'none', scrollTrigger: { trigger: '.foot', start: 'top bottom', end: 'bottom bottom', scrub: true } })
+gsap.from('.foot__mark img, .foot__info li', { y: 30, opacity: 0, duration: 1, stagger: 0.06, ease: 'expo.out', scrollTrigger: { trigger: '.foot', start: 'top 92%' } })
 
 pageEnter()
 document.fonts.ready.then(() => ScrollTrigger.refresh())
