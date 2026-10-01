@@ -22,19 +22,28 @@ The nav, menu and footer for all pages are built in `src/chrome.js` — edit lin
 
 Tapping any design opens its story (front/back gallery, story, details). Each story has its own link, e.g. `/#/drop/rising` or `/collection.html#/drop/quattro`.
 
-## Editing content
-Everything the site says lives in **`src/content.js`**: brand info and contact links, the designs, the manifesto, the pillars and the team.
+## Admin — editing the site (`/admin`)
+Designs, the showroom, contact details and the team are edited at **yoursite.com/admin**, behind a password. Saving publishes immediately — no rebuild.
 
-- **Order / featured:** designs are listed newest first. Mark up to 3 with `featured: true` to show them on the home page (otherwise the first 3 are used). The first featured design stars in the spotlight.
-- **Stories marked `// DRAFT`** (and the team page's "how we work" list) are placeholders — rewrite them.
+- **Designs:** add (upload the front+back mockup; the Figma print export is optional and powers the 3D tee), edit text/colours, reorder, delete.
+  Images are processed in the browser: the mockup is split, plain backgrounds removed, the print lined up automatically.
+- **Showroom:** pick the three designs on the glass (slot 1 starts in the light).
+- **Contact:** Instagram, email, phone, WhatsApp, location, tagline, drop name.
+- **Team:** names, roles, lines, photos.
 
-## Adding a new design
-1. Drop the raw image(s) into `/design` — either one front+back side-by-side image, or separate front and back photos.
-2. Register it at the top of `scripts/process-designs.py` (slug, file, layout, background type).
-3. Run `python scripts/process-designs.py` (needs `pip install pillow numpy scipy`). It splits front/back, removes plain studio backgrounds and writes `public/designs/<slug>/front.webp` + `back.webp`.
-4. Add the design to `src/content.js` with `images: ['/designs/<slug>/front.webp', '/designs/<slug>/back.webp']`.
+**One-time setup on Netlify:** Site configuration → Environment variables → add
+`ADMIN_PASSWORD` (a long password) and `ADMIN_SECRET` (any long random string), then redeploy.
+Content and uploads are stored in Netlify Blobs (built in, nothing to set up). Change the password any time by editing the variable and redeploying — that also signs everyone out.
 
-Team photos: put them in `public/team/` and add `photo: '/team/name.jpg'`.
+**How it works:** `netlify/functions/api.mjs` (content, login, uploads) and `media.mjs` (serves uploads at `/media/…`).
+The site loads `/api/content` on top of the built-in defaults in `src/content.defaults.js`, so if the API is ever unreachable the site still works with the defaults.
+
+**Locally:** `npx netlify-cli dev` → http://localhost:8888 (site + functions + /admin). Copy `.env.example` to `.env` and set a password. Plain `npm run dev` still works but has no admin/API.
+
+## Adding a new design without the admin
+The admin is the normal way. The scripts below do the same processing offline and write the files into the repo (then add the design to `src/content.defaults.js`):
+1. Drop the raw image(s) into `/design`, register them in `scripts/process-designs.py`, run `python scripts/process-designs.py` (needs `pip install pillow numpy scipy`).
+2. For the 3D print: register the Figma print export in `scripts/process-prints.py` and run it.
 
 ## 3D showroom
 The home page showroom renders the featured tees in 3D on `public/models/tee.glb`.

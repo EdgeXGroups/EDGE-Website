@@ -4,3 +4,8 @@ dist
 # 30 MB source model — kept locally, see README "3D showroom"
 design/*.glb
 3d/preview/
+
+# local secrets for `netlify dev`
+.env
+.netlify/
+deno.lock
