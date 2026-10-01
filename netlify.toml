@@ -5,6 +5,13 @@
 [build.environment]
   NODE_VERSION = "22"
 
+
+[[headers]]
+  for = "/admin*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+    Cache-Control = "no-store"
+
 # Vite fingerprints everything in /assets — cache it forever.
 [[headers]]
   for = "/assets/*"
@@ -14,6 +21,11 @@
 # Product images and logos change rarely, but aren't fingerprinted.
 [[headers]]
   for = "/designs/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+
+[[headers]]
+  for = "/models/*"
   [headers.values]
     Cache-Control = "public, max-age=604800"
 
@@ -37,6 +49,11 @@
 [[redirects]]
   from = "/team"
   to = "/team.html"
+  status = 200
+
+[[redirects]]
+  from = "/admin"
+  to = "/admin.html"
   status = 200
 
 [[redirects]]

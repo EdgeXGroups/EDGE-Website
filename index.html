@@ -59,14 +59,19 @@
     </section>
 
     <!-- ░░ Spotlight — newest piece, revealed by light ░░ -->
-    <section class="spot" id="spotlight" aria-label="Spotlight: the newest design">
+    <section class="spot" id="drop" aria-label="Drop 01: the featured designs">
       <canvas class="spot__gl"></canvas>
       <div class="spot__intro">
         <p class="mono eyebrow">Now showing</p>
-        <p class="spot__lead serif">Lights down.<br />Something new.</p>
+        <h2 class="display drop__title"><span class="line-mask"><span>Drop</span></span><span class="line-mask"><em class="serif">01</em></span></h2>
         <p class="mono spot__hint">Keep scrolling ↓</p>
       </div>
-      <div class="spot__stage"><div class="spot__float"><div class="spot__piece"></div></div></div>
+      <div class="spot__stage"></div>
+      <div class="spot__controls">
+        <button class="spot__arrow spot__prev" aria-label="Previous design" data-magnetic>←</button>
+        <span class="mono spot__turn">Scroll to turn ↻</span>
+        <button class="spot__arrow spot__next" aria-label="Next design" data-magnetic>→</button>
+      </div>
       <div class="spot__caption">
         <p class="mono spot__num"></p>
         <h2 class="display spot__name"></h2>
@@ -76,15 +81,8 @@
       <div class="spot__progress" aria-hidden="true"><i></i></div>
     </section>
 
-    <!-- ░░ Drop ░░ -->
-    <section class="drop" id="drop">
-      <div class="drop__head">
-        <h2 class="display drop__title"><span class="line-mask"><span>Drop</span></span><span class="line-mask"><em class="serif">01</em></span></h2>
-      </div>
-      <div class="drop__pin">
-        <div class="drop__track"></div>
-      </div>
-    </section>
+    <!-- ░░ The rest of the collection ░░ -->
+    <section class="more"></section>
 
     <!-- ░░ What makes Edge different ░░ -->
     <section class="different" id="different">

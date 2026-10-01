@@ -3,8 +3,11 @@ import './pages.css'
 import { brand, designs, featured, manifesto, pillars } from './content.js'
 import { createHero } from './hero.js'
 import { createSpotlight } from './spotlight.js'
+import { createShowroom3D } from './showroom3d.js'
+import { imagesFor } from './mockup.js'
+import { Color } from 'three'
 import {
-  $, $$, reduced, fine, pad, esc, links, fillBrand, mediaHTML, lenis, scrollTo,
+  $, $$, reduced, pad, esc, fillBrand, lenis, scrollTo,
   initCursor, startRouter, riseLines, arrivedFromSite, pageEnter, gsap, ScrollTrigger, SplitText,
 } from './shared.js'
 
@@ -18,28 +21,14 @@ function buildTapes() {
   fill($('.tape--b .tape__track'), b)
 }
 
-function buildCards() {
-  const more = designs.length - featured.length
-  $('.drop__track').innerHTML =
-    featured
-      .map((d, i) => `
-      <article class="card" style="--card-accent:${d.accent}">
-        <a class="card__inner" href="#/drop/${d.slug}" data-cursor="Read story" aria-label="${esc(d.name)} — read the story">
-          <div class="card__media">${mediaHTML(d, { eager: i < 2 })}</div>
-          <div class="card__top"><span class="card__num">${pad(designs.indexOf(d) + 1)} / ${pad(designs.length)}</span><span class="card__type">${esc(d.type)}</span></div>
-          <div class="card__info">
-            <span class="display card__name">${esc(d.name)}</span>
-            <p class="card__tag">${esc(d.tagline)}</p>
-            <span class="card__cta"><i>→</i>Read the story</span>
-          </div>
-          <span class="card__dim"></span>
-        </a>
-      </article>`)
-      .join('') +
-    `<a class="drop__end" href="/collection.html" data-cursor="Collection">
+function buildMore() {
+  const rest = designs.filter((d) => !featured.includes(d))
+  if (!rest.length) return $('.more').remove()
+  $('.more').innerHTML = `
+    <a class="drop__end" href="/collection.html" data-cursor="Collection">
       <span class="mono eyebrow">The collection</span>
-      <span class="display drop__end-title">+${pad(more)}<br/><em class="serif">more</em><br/>designs</span>
-      <span class="drop__end-stack">${designs.filter((d) => !featured.includes(d)).slice(0, 3).map((d) => `<span style="--m-accent:${d.accent}"><img src="${d.images?.[0] || ''}" alt="" loading="lazy"/></span>`).join('')}</span>
+      <span class="display drop__end-title">+${pad(rest.length)}<br/><em class="serif">more</em><br/>designs</span>
+      <span class="drop__end-stack">${rest.slice(0, 3).map((d) => `<span style="--m-accent:${d.accent}"><img src="${d.images?.[0] || ''}" alt="" loading="lazy"/></span>`).join('')}</span>
       <span class="btn"><span>View all ${pad(designs.length)} →</span></span>
     </a>`
 }
@@ -60,14 +49,24 @@ function buildManifesto() {
 }
 
 function buildSpotlight() {
-  const d = featured[0]
-  const [front, back] = d.images?.length ? d.images : []
+  $('.spot__stage').innerHTML = featured
+    .map((d) => {
+      const [front, back] = imagesFor(d)
+      return `
+      <div class="spot__slot" style="--m-accent:${d.accent}" role="button" tabindex="-1" aria-label="${esc(d.name)}">
+        <div class="spot__bob"><div class="spot__piece">
+          <img class="spot__img spot__img--front" src="${front}" alt="${esc(d.name)} — front" />
+          ${back ? `<img class="spot__img spot__img--back" src="${back}" alt="${esc(d.name)} — back" />` : ''}
+          <img class="spot__reflect" src="${front}" alt="" aria-hidden="true" />
+        </div></div>
+      </div>`
+    })
+    .join('')
+  setCaption(featured[0])
+}
+
+function setCaption(d) {
   $('.spot').style.setProperty('--s-accent', d.accent)
-  $('.spot__piece').innerHTML = front
-    ? `<img class="spot__img" src="${front}" alt="${esc(d.name)} — front" />
-       ${back ? `<img class="spot__img spot__img--back" src="${back}" alt="${esc(d.name)} — back" />` : ''}
-       <img class="spot__reflect" src="${front}" alt="" aria-hidden="true" />`
-    : ''
   $('.spot__num').textContent = `No. ${pad(designs.indexOf(d) + 1)} — ${d.category || brand.drop}`
   $('.spot__name').textContent = d.name
   $('.spot__tag').textContent = d.tagline
@@ -77,7 +76,7 @@ function buildSpotlight() {
 fillBrand()
 buildTapes()
 buildSpotlight()
-buildCards()
+buildMore()
 buildManifesto()
 lenis?.stop()
 
@@ -165,37 +164,151 @@ function initTapes() {
   })
 }
 
-/* ───────── Spotlight ───────── */
+/* ───────── Showroom: three pieces on the glass, one in the light ───────── */
 
 function initSpotlight() {
   const sec = $('.spot')
+  const n = featured.length
+  const mix = (a, b, k) => a + (b - a) * k
+  // scroll-driven state, 0 → 1
+  const state = { center: 0, sides: 0, lit: 0, turn: 0 }
+  let centre = 0
+
+  const slots = $$('.spot__slot').map((el, i) => ({
+    el, d: featured[i], x: 0, s: 1, side: 0,
+    front: $('.spot__img--front', el), back: $('.spot__img--back', el), reflect: $('.spot__reflect', el), showingBack: false,
+  }))
+  // -1 left, 0 centre, 1 right
+  const roleOf = (i) => (n === 1 ? 0 : ((i - centre + n + 1) % n) - 1)
+  const target = (role) => {
+    const desktop = innerWidth >= 900
+    const off = desktop ? Math.min(innerWidth * 0.3, 460) : innerWidth * 0.42
+    return role === 0 ? { x: 0, s: 1, side: 0 } : { x: role * off, s: desktop ? 0.62 : 0.5, side: 1 }
+  }
+
+  function apply(sl) {
+    const k = sl.side
+    const y = (1 - state.center) * 70 * (1 - k)
+    sl.el.style.transform = `translate3d(calc(-50% + ${sl.x}px), ${y}px, 0) scale(${sl.s})`
+    sl.el.style.opacity = mix(state.center, state.sides, k)
+    sl.el.style.zIndex = k < 0.5 ? 3 : 1
+    sl.el.style.setProperty('--lit', state.lit * mix(1, 0.2, k))
+    // the turn: front squeezes to an edge, back opens out — a turntable in 2D
+    const t = sl.back ? state.turn * (1 - k) : 0
+    const f = Math.max(0.001, 1 - 2 * t), b = Math.max(0.001, 2 * t - 1)
+    sl.front.style.transform = `scaleX(${t < 0.5 ? f : 0.001})`
+    if (sl.back) sl.back.style.transform = `scaleX(${t < 0.5 ? 0.001 : b})`
+    const back = t >= 0.5
+    if (back !== sl.showingBack) { sl.showingBack = back; sl.reflect.src = (back ? sl.back : sl.front).src }
+    sl.reflect.style.transform = `scaleY(-1) scaleX(${t < 0.5 ? f : b})`
+  }
+  // the 3D garments follow exactly the same state as these (now invisible) tap targets
+  let show3d = null
+  const push = () => {
+    if (!show3d) return
+    slots.forEach((sl) => (sl.turn = state.turn * (1 - sl.side)))
+    show3d.sync(slots, state, $('.spot__piece').offsetHeight)
+  }
+  const applyAll = () => { slots.forEach(apply); push() }
+  function place(animate) {
+    slots.forEach((sl, i) => {
+      const role = roleOf(i)
+      sl.el.dataset.role = role
+      sl.el.dataset.cursor = role === 0 ? 'Read story' : 'Bring forward'
+      const to = target(role)
+      if (animate) gsap.to(sl, { ...to, duration: reduced ? 0.01 : 1, ease: 'expo.inOut', overwrite: true, onUpdate: () => { apply(sl); push() } })
+      else { Object.assign(sl, to); apply(sl) }
+    })
+  }
+  place(false)
+  addEventListener('resize', () => place(false))
+
+  // swap: dir +1 brings the right-hand piece into the light, -1 the left
+  function swap(dir) {
+    if (n < 2) return
+    centre = (centre + dir + n) % n
+    place(true)
+    const d = featured[centre]
+    gsap.timeline()
+      .to('.spot__caption > *', { opacity: 0, y: -12, duration: 0.3, stagger: 0.03, ease: 'power2.in' })
+      .add(() => setCaption(d))
+      .fromTo('.spot__caption > *', { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.6, stagger: 0.05, ease: 'expo.out' })
+    if (spot) {
+      const c = new Color(d.accent)
+      gsap.to(spot.uniforms.uAccent.value, { r: c.r, g: c.g, b: c.b, duration: 1, ease: 'power2.inOut' })
+      // a quick flare of light as the new piece steps in
+      gsap.fromTo(spot.uniforms.uPulse, { value: 1 }, { value: 0, duration: 1.2, ease: 'power2.out' })
+    }
+  }
+
+  // tap a side piece to bring it forward, tap the lit one to read its story
+  let dragged = false
+  slots.forEach((sl, i) => sl.el.addEventListener('click', () => {
+    if (dragged || !sec.classList.contains('is-live')) return
+    const role = roleOf(i)
+    if (role === 0) $('.spot__cta').click()
+    else swap(role)
+  }))
+  $('.spot__prev').addEventListener('click', () => swap(-1))
+  $('.spot__next').addEventListener('click', () => swap(1))
+  // swipe
+  let sx = null
+  sec.addEventListener('pointerdown', (e) => { sx = e.clientX; dragged = false })
+  sec.addEventListener('pointerup', (e) => {
+    if (sx === null || !sec.classList.contains('is-live')) return
+    const dx = e.clientX - sx
+    sx = null
+    if (Math.abs(dx) > 45) { dragged = true; swap(dx < 0 ? 1 : -1); setTimeout(() => (dragged = false), 50) }
+  })
+  addEventListener('keydown', (e) => {
+    if (!sec.classList.contains('is-live') || document.body.classList.contains('is-locked')) return
+    const r = sec.getBoundingClientRect()
+    if (r.top > innerHeight * 0.5 || r.bottom < innerHeight * 0.5) return
+    if (e.key === 'ArrowRight') swap(1)
+    if (e.key === 'ArrowLeft') swap(-1)
+  })
+
   // keep the shader's rim line in sync with the CSS --rim (72% phone / 80% desktop)
   const layout = () => {
     if (!spot) return
     const desktop = innerWidth >= 900
     spot.uniforms.uRimY.value = desktop ? -0.3 : -0.22
     spot.uniforms.uApY.value = desktop ? 0.34 : 0.36
+    show3d?.setRim(desktop ? 0.8 : 0.72)
+    push()
   }
   layout()
+  if (spot) {
+    createShowroom3D(spot, featured)
+      .then((s3) => { show3d = s3; spot.add(s3); sec.classList.add('is-3d'); layout(); })
+      .catch((err) => console.warn('3D showroom unavailable, using photos', err))
+  }
   addEventListener('resize', layout)
-  const tl = gsap.timeline({ defaults: { ease: 'none' } })
-  const piece = $('.spot__piece')
-  const back = $('.spot__img--back')
-  // one timeline, 0 → 1, drives both the shader and the DOM
+
+  // one timeline, 0 → 1, drives the shader, the pieces and the turn
+  const tl = gsap.timeline({
+    defaults: { ease: 'none' },
+    onUpdate: () => {
+      applyAll()
+      sec.classList.toggle('is-live', state.sides > 0.6)
+      $('.spot__turn').classList.toggle('is-done', state.turn > 0.98)
+    },
+  })
   if (spot) tl.to(spot.uniforms.uT, { value: 1, duration: 1 }, 0)
   tl.fromTo('.spot__intro', { opacity: 1, y: 0 }, { opacity: 0, y: -40, duration: 0.1 }, 0.06)
-    .fromTo(piece, { opacity: 0, y: 60, scale: 0.92, '--lit': 0 }, { opacity: 1, y: 0, scale: 1, '--lit': 1, duration: 0.18, ease: 'power2.out' }, 0.5)
-    .fromTo('.spot__caption > *', { opacity: 0, y: 30 }, { opacity: 1, y: 0, stagger: 0.02, duration: 0.1, ease: 'power2.out' }, 0.62)
-  if (back) tl.fromTo(back, { clipPath: 'inset(0% 0% 100% 0%)' }, { clipPath: 'inset(0% 0% 0% 0%)', duration: 0.12, ease: 'power2.inOut' }, 0.8)
-  tl.to({}, { duration: 0.08 }) // hold before unpinning
+    .to(state, { center: 1, lit: 1, duration: 0.16, ease: 'power2.out' }, 0.5)
+    .to(state, { sides: 1, duration: 0.12, ease: 'power2.out' }, 0.6)
+    .fromTo('.spot__caption, .spot__controls', { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.1, ease: 'power2.out' }, 0.62)
+    .to(state, { turn: 1, duration: 0.2, ease: 'power1.inOut' }, 0.74)
+    .to({}, { duration: 0.06 }) // hold before unpinning
 
   ScrollTrigger.create({
-    trigger: sec, start: 'top top', end: () => '+=' + innerHeight * (reduced ? 1 : 3.2),
+    trigger: sec, start: 'top top', end: () => '+=' + innerHeight * (reduced ? 1 : 4),
     pin: true, scrub: reduced ? true : 0.8, animation: tl, anticipatePin: 1, invalidateOnRefresh: true,
-    onUpdate: (s) => $('.spot__progress i').style.transform = `scaleX(${s.progress})`,
+    onUpdate: (s) => ($('.spot__progress i').style.transform = `scaleX(${s.progress})`),
   })
-  // subtle floating once on stage
-  if (!reduced) gsap.to('.spot__float', { y: -10, duration: 2.6, ease: 'sine.inOut', yoyo: true, repeat: -1 })
+  // pieces breathe gently once on stage
+  if (!reduced) $$('.spot__bob').forEach((b, i) => gsap.to(b, { y: -10, duration: 2.6, delay: i * 0.4, ease: 'sine.inOut', yoyo: true, repeat: -1 }))
 }
 
 /* ───────── Scroll animations ───────── */
@@ -223,37 +336,10 @@ function initScroll() {
       .from([$('.pillar__n', el), $('.pillar__b', el)], { opacity: 0, y: 16, duration: 0.8, stagger: 0.08, ease: 'expo.out' }, 0.45)
   })
 
-  gsap.from('.foot__mark img', { yPercent: 40, scale: 0.9, ease: 'none', scrollTrigger: { trigger: '.foot', start: 'top bottom', end: 'bottom bottom', scrub: true } })
+  gsap.from('.foot__mark img, .foot__info li', { y: 30, opacity: 0, duration: 1, stagger: 0.06, ease: 'expo.out', scrollTrigger: { trigger: '.foot', start: 'top 92%' } })
   gsap.from('.tape--a', { rotate: -12, ease: 'none', scrollTrigger: { trigger: '.tapes', start: 'top bottom', end: 'bottom top', scrub: true } })
   gsap.from('.tape--b', { rotate: 12, ease: 'none', scrollTrigger: { trigger: '.tapes', start: 'top bottom', end: 'bottom top', scrub: true } })
 
-  const mm = gsap.matchMedia()
-  mm.add('(min-width: 900px)', () => {
-    const track = $('.drop__track')
-    const dist = () => Math.max(0, track.scrollWidth - innerWidth)
-    const tween = gsap.to(track, {
-      x: () => -dist(), ease: 'none',
-      scrollTrigger: { trigger: '.drop__pin', start: 'top top', end: () => '+=' + dist(), pin: true, scrub: 1, invalidateOnRefresh: true, anticipatePin: 1 },
-    })
-    $$('.card').forEach((card) => {
-      gsap.fromTo($('.media', card), { xPercent: -5 }, { xPercent: 5, ease: 'none', scrollTrigger: { trigger: card, containerAnimation: tween, start: 'left right', end: 'right left', scrub: true } })
-      gsap.from($('.card__name', card), { yPercent: 60, opacity: 0, ease: 'expo.out', duration: 1, scrollTrigger: { trigger: card, containerAnimation: tween, start: 'left 85%' } })
-    })
-  })
-  mm.add('(max-width: 899px)', () => {
-    const cards = $$('.card')
-    cards.forEach((card, i) => {
-      const next = cards[i + 1]
-      // on touch, the back of the tee wipes in once the card settles
-      const back = $('.media__img--back', card)
-      if (back) gsap.fromTo(back, { clipPath: 'circle(0% at 50% 100%)' }, { clipPath: 'circle(150% at 50% 100%)', duration: 1.1, ease: 'expo.inOut', scrollTrigger: { trigger: card, start: 'top 20%', toggleActions: 'play none none reverse' } })
-      gsap.from($('.card__name', card), { yPercent: 50, opacity: 0, duration: 1, ease: 'expo.out', scrollTrigger: { trigger: card, start: 'top 70%' } })
-      if (!next) return
-      const st = { trigger: next, start: 'top bottom', end: 'top top+=70', scrub: true }
-      gsap.to($('.card__inner', card), { scale: 0.9, rotate: i % 2 ? 1.5 : -1.5, ease: 'none', scrollTrigger: st })
-      gsap.to($('.card__dim', card), { opacity: 0.6, ease: 'none', scrollTrigger: { ...st } })
-    })
-  })
 }
 
 /* ───────── Boot ───────── */
