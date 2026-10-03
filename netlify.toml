@@ -5,6 +5,23 @@
 [build.environment]
   NODE_VERSION = "22"
 
+# /api/create-order, /api/verify-payment, /api/razorpay-webhook (each function sets its own path)
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+
+[[headers]]
+  for = "/checkout*"
+  [headers.values]
+    X-Robots-Tag = "noindex"
+    Cache-Control = "no-store"
+
+[[headers]]
+  for = "/account*"
+  [headers.values]
+    X-Robots-Tag = "noindex"
+    Cache-Control = "no-store"
 
 [[headers]]
   for = "/admin*"
@@ -59,4 +76,34 @@
 [[redirects]]
   from = "/contact"
   to = "/contact.html"
+  status = 200
+
+[[redirects]]
+  from = "/checkout"
+  to = "/checkout.html"
+  status = 200
+
+[[redirects]]
+  from = "/account"
+  to = "/account.html"
+  status = 200
+
+[[redirects]]
+  from = "/privacy"
+  to = "/privacy.html"
+  status = 200
+
+[[redirects]]
+  from = "/terms"
+  to = "/terms.html"
+  status = 200
+
+[[redirects]]
+  from = "/refunds"
+  to = "/refunds.html"
+  status = 200
+
+[[redirects]]
+  from = "/shipping"
+  to = "/shipping.html"
   status = 200

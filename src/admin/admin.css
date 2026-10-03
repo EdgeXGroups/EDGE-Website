@@ -125,3 +125,16 @@ main.wrap { max-width: 980px; margin: 0 auto; padding: 22px 16px 120px; display:
 .ctable td input { width: 100%; min-width: 64px; }
 .ctable th .icon { width: 26px; height: 26px; vertical-align: middle; }
 .ctable input { padding: 8px 10px; border-radius: 8px; }
+
+/* orders */
+.ord { gap: 14px; }
+.ord__sum { display: grid; grid-template-columns: auto 1fr auto auto; gap: 4px 12px; align-items: center; cursor: pointer; list-style: none; }
+.ord__sum::-webkit-details-marker { display: none; }
+.ord__sum .muted { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ord__st { margin: 0; background: var(--line); color: var(--bone); }
+.ord__st--paid { background: var(--accent); color: var(--ink); }
+.ord__st--shipped { background: #8fd0ff; color: var(--ink); }
+.ord__st--delivered { background: #9be39b; color: var(--ink); }
+.ord__items { list-style: none; display: grid; gap: 4px; }
+.ord p { line-height: 1.5; margin-bottom: 6px; }
+@media (max-width: 640px) { .ord__sum { grid-template-columns: 1fr auto; } .ord__sum .muted { grid-column: 1 / -1; grid-row: 2; } }

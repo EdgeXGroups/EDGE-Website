@@ -62,6 +62,7 @@ const after = `
     </div>
     <div class="foot__row mono">
       <span>© <span class="year"></span> EDGE</span>
+      <nav class="foot__legal" aria-label="Policies"><a href="/shipping.html">Shipping</a><a href="/refunds.html">Refunds</a><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a></nav>
       <a class="foot__credit" href="https://sketchfab.com/3d-models/fish-t-shirt-b2bf0e93920f42618fb0255e137a61c9" target="_blank" rel="noopener">3D tee: “fish t-shirt” by Gleb Gubkin, CC BY 4.0 (modified)</a>
       <a href="#top" data-magnetic>Back to top ↑</a>
     </div>

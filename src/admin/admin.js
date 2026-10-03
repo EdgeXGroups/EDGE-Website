@@ -7,7 +7,7 @@ import './admin.css'
 import { createClient } from '@supabase/supabase-js'
 import * as D from '../content.defaults.js'
 import { SUPABASE_URL, SUPABASE_KEY } from '../supabase.config.js'
-import { SIZES, TAGS, STOCK, priceOf, offOf, stockOf } from '../commerce.js'
+import { SIZES, TAGS, STOCK, priceOf, offOf, stockOf, shippingRules, money } from '../commerce.js'
 import { loadImage, splitMockup, singleView, alignPrint, garmentColour, portrait, photo, toWebp } from './process.js'
 
 const $ = (s, r = document) => r.querySelector(s)
@@ -183,8 +183,8 @@ function renderNewPassword(error = '') {
 
 /* ───────── Shell ───────── */
 
-let tab = 'designs'
-const TABS = [['designs', 'Designs'], ['showroom', 'Showroom'], ['charts', 'Size charts'], ['contact', 'Contact'], ['team', 'Team']]
+let tab = 'orders'
+const TABS = [['orders', 'Orders'], ['designs', 'Designs'], ['showroom', 'Showroom'], ['charts', 'Size charts'], ['contact', 'Contact & shop'], ['team', 'Team']]
 
 function renderShell() {
   app.innerHTML = `
@@ -201,7 +201,7 @@ function renderShell() {
     <main class="wrap"></main>`
   $('[data-act="logout"]').addEventListener('click', logout)
   $$('[data-tab]').forEach((b) => b.addEventListener('click', () => { tab = b.dataset.tab; renderShell() }))
-  ;({ designs: renderDesigns, showroom: renderShowroom, charts: renderCharts, contact: renderContact, team: renderTeam })[tab]($('main.wrap'))
+  ;({ orders: renderOrders, designs: renderDesigns, showroom: renderShowroom, charts: renderCharts, contact: renderContact, team: renderTeam })[tab]($('main.wrap'))
 }
 
 /* ───────── Designs ───────── */
@@ -537,16 +537,24 @@ const BRAND_FIELDS = [
 ]
 
 function renderContact(main) {
+  const ship = shippingRules(data.brand)
   main.innerHTML = `
     <div class="head"><div><h2>Contact & brand</h2><p>Shown in the footer, on the Contact page and around the site. Leave a field empty to hide it.</p></div></div>
     <form class="card">
-      <div class="grid2">${BRAND_FIELDS.map(([k, label, hint]) => `<label class="f"><span>${label}</span><input name="${k}" value="${esc(data.brand[k])}" />${hint ? `<small>${hint}</small>` : ''}</label>`).join('')}</div>
+      <div class="grid2">${BRAND_FIELDS.map(([k, label, hint]) => `<label class="f"><span>${label}</span><input name="${k}" value="${esc(data.brand[k] ?? '')}" />${hint ? `<small>${hint}</small>` : ''}</label>`).join('')}</div>
+      <h3 class="mono">Shipping</h3>
+      <div class="grid2">
+        <label class="f"><span>Shipping fee (₹)</span><input name="shippingFee" type="number" min="0" step="1" value="${ship.fee ?? ''}" /><small>Charged on orders below the free-shipping amount. 0 = always free.</small></label>
+        <label class="f"><span>Free shipping from (₹)</span><input name="freeShippingAbove" type="number" min="0" step="1" value="${ship.freeAbove ?? ''}" /><small>Orders this big ship free. Leave empty to always charge the fee.</small></label>
+      </div>
       <div><button class="b b--primary" type="submit">Save & publish</button></div>
     </form>`
   $('form', main).addEventListener('submit', async (e) => {
     e.preventDefault()
     for (const [k] of BRAND_FIELDS) data.brand[k] = e.target[k].value.trim().replace(k === 'instagram' ? /^@/ : /$^/, '')
     data.brand.city = data.brand.location
+    data.brand.shippingFee = e.target.shippingFee.value === '' ? '0' : String(Math.max(0, Math.round(+e.target.shippingFee.value)))
+    data.brand.freeShippingAbove = e.target.freeShippingAbove.value === '' ? '' : String(Math.max(0, Math.round(+e.target.freeShippingAbove.value)))
     try { await publish('Contact details saved') } catch (err) { toast(err.message, true) }
   })
 }
@@ -605,6 +613,70 @@ function renderTeam(main) {
         toast('Photo added — press Save & publish')
       } catch (err) { toast(err.message, true) }
     })
+  })
+}
+
+/* ───────── Orders ───────── */
+
+const ORDER_STATUS = { paid: 'To ship', shipped: 'Shipped', delivered: 'Delivered', cancelled: 'Cancelled', pending: 'Not paid', failed: 'Payment failed' }
+let orderFilter = 'paid'
+
+async function renderOrders(main) {
+  main.innerHTML = `<div class="head"><div><h2>Orders</h2><p>Paid orders land here as “To ship”. Mark them shipped (add the tracking number in the note), then delivered.</p></div>
+    <button class="b b--sm" data-act="refresh">Refresh</button></div>
+    <div class="seg seg--wrap" role="tablist">${[['paid', 'To ship'], ['shipped', 'Shipped'], ['delivered', 'Delivered'], ['cancelled', 'Cancelled'], ['unpaid', 'Unpaid / failed'], ['all', 'All']].map(([k, l]) => `<label><input type="radio" name="of" value="${k}" ${k === orderFilter ? 'checked' : ''} />${l}</label>`).join('')}</div>
+    <div class="list" data-orders><p class="muted">Loading…</p></div>`
+  $('[data-act="refresh"]', main).addEventListener('click', () => renderOrders(main))
+  $$('[name="of"]', main).forEach((r) => r.addEventListener('change', () => { orderFilter = r.value; renderOrders(main) }))
+
+  let q = db.from('orders').select('*').order('created_at', { ascending: false }).limit(200)
+  if (orderFilter === 'unpaid') q = q.in('status', ['pending', 'failed'])
+  else if (orderFilter !== 'all') q = q.eq('status', orderFilter)
+  const { data: orders, error } = await q
+  const box = $('[data-orders]', main)
+  if (error) {
+    box.innerHTML = `<div class="card"><p>${/orders/.test(error.message) && /does not exist|Could not find/.test(error.message) ? 'Orders need one database update — run <code>supabase/migrations/0006_accounts_orders.sql</code>.' : esc(explain(error))}</p></div>`
+    return
+  }
+  if (!orders.length) { box.innerHTML = '<div class="card"><p class="muted">Nothing here.</p></div>'; return }
+  const when = (iso) => new Date(iso).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })
+  box.innerHTML = orders.map((o) => `
+    <details class="card ord" data-id="${o.id}">
+      <summary class="ord__sum">
+        <b>${esc(o.number)}</b>
+        <span class="muted">${when(o.created_at)} · ${esc(o.name)}</span>
+        <span class="badge ord__st ord__st--${o.status}">${ORDER_STATUS[o.status] || o.status}</span>
+        <b class="ord__total">${money(o.total)}</b>
+      </summary>
+      <div class="grid2">
+        <div>
+          <h3 class="mono">Items</h3>
+          <ul class="ord__items">${o.items.map((i) => `<li>${esc(i.name)}${i.size ? ` — <b>${esc(i.size)}</b>` : ''} × ${i.qty} <span class="muted">${money(i.price * i.qty)}</span></li>`).join('')}
+            <li class="muted">Shipping ${o.shipping ? money(o.shipping) : 'free'} · Total ${money(o.total)}</li></ul>
+        </div>
+        <div>
+          <h3 class="mono">Ship to</h3>
+          <p>${esc(o.address.name)}<br />${esc(o.address.line1)}${o.address.line2 ? `<br />${esc(o.address.line2)}` : ''}<br />${esc(o.address.city)}, ${esc(o.address.state)} ${esc(o.address.pincode)}</p>
+          <p><a href="tel:+91${esc(o.phone)}">+91 ${esc(o.phone)}</a> · <a href="mailto:${esc(o.email)}">${esc(o.email)}</a></p>
+          <p class="muted">${o.user_id ? 'Signed-in customer' : 'Guest checkout'}${o.razorpay_payment_id ? ` · Razorpay ${esc(o.razorpay_payment_id)}` : ''}</p>
+        </div>
+      </div>
+      <div class="grid2">
+        <label class="f"><span>Status</span><select data-k="status">${['paid', 'shipped', 'delivered', 'cancelled', 'pending', 'failed'].map((s) => `<option value="${s}" ${s === o.status ? 'selected' : ''}>${ORDER_STATUS[s]}</option>`).join('')}</select><small>Cancelling here doesn't refund — refund in the Razorpay dashboard.</small></label>
+        <label class="f"><span>Note (tracking number, courier…)</span><input data-k="note" value="${esc(o.note || '')}" /></label>
+      </div>
+      <div><button class="b b--primary b--sm" data-act="save-order">Save</button></div>
+    </details>`).join('')
+  box.addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-act="save-order"]')
+    if (!btn) return
+    const card = btn.closest('.ord')
+    btn.disabled = true
+    const { error: err } = await db.from('orders').update({ status: $('[data-k="status"]', card).value, note: $('[data-k="note"]', card).value.trim() || null, updated_at: new Date().toISOString() }).eq('id', card.dataset.id)
+    btn.disabled = false
+    if (err) return toast(explain(err), true)
+    toast('Order updated')
+    renderOrders(main)
   })
 }
 

@@ -43,3 +43,28 @@ export const badgeHTML = (d) => { const b = badgeOf(d); return b ? `<span class=
 
 // the size chart a design points at (charts are saved by name in the admin)
 export const chartFor = (d, charts) => (d.size_chart && charts.find((c) => c.name === d.size_chart)) || null
+
+// Shipping: a flat fee, free from a threshold (both set in Admin → Contact & shop).
+// Unset → ₹79, free from ₹999. Cleared in the admin → no fee / never free.
+export function shippingRules(brand = {}) {
+  return {
+    fee: brand.shippingFee === undefined ? 79 : num(brand.shippingFee) ?? 0,
+    freeAbove: brand.freeShippingAbove === undefined ? 999 : num(brand.freeShippingAbove),
+  }
+}
+export function shippingFor(subtotal, brand) {
+  const { fee, freeAbove } = shippingRules(brand)
+  if (subtotal <= 0) return 0
+  return freeAbove != null && subtotal >= freeAbove ? 0 : fee
+}
+
+// Why a bag line can't be bought right now ('' = it can). Used by the bag and, again, by the server.
+export function lineProblem(d, size) {
+  if (!d) return 'No longer available'
+  if (!buyable(d)) return stockOf(d) === 'coming_soon' ? 'Coming soon' : 'Sold out'
+  if (priceNum(d) == null) return 'Not on sale yet'
+  const sizes = sizesOf(d)
+  if (sizes.length && !sizes.includes(size)) return size ? `Size ${size} sold out` : 'Pick a size'
+  return ''
+}
+export const MAX_QTY = 10
