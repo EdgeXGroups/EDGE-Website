@@ -6,21 +6,28 @@
 //
 // Netlify env: POSTHOG_PERSONAL_API_KEY (a personal API key with "Query: read"),
 //              POSTHOG_PROJECT_ID. The region follows POSTHOG_HOST in src/analytics.config.js.
-import { handler, userFrom, db, HttpError } from '../lib/shop.mjs'
+import { handler, userFrom, db, HttpError, rawEnv, envReport } from '../lib/shop.mjs'
 import { POSTHOG_HOST } from '../../src/analytics.config.js'
 
-const clean = (v) => (v || '').trim().replace(/^["']|["']$/g, '')
+const clean = (v) => String(v || '').trim().replace(/^["']|["']$/g, '')
 
 export default handler(async (req) => {
   const user = await userFrom(req)
   if (!user) throw new HttpError(401, 'Sign in to the admin first.')
-  const admin = await db(`admins?select=user_id&user_id=eq.${user.id}`)
+  let admin
+  try {
+    admin = await db(`admins?select=user_id&user_id=eq.${user.id}`)
+  } catch (err) {
+    // a missing setting: say exactly what this function can and can't see
+    if (err.status === 503) throw new HttpError(503, `${err.message} This function sees: ${envReport()}.`)
+    throw err
+  }
   if (!admin.length) throw new HttpError(403, 'Admins only.')
 
-  const key = clean(process.env.POSTHOG_PERSONAL_API_KEY)
-  const project = clean(process.env.POSTHOG_PROJECT_ID)
+  const key = clean(rawEnv('POSTHOG_PERSONAL_API_KEY'))
+  const project = clean(rawEnv('POSTHOG_PROJECT_ID'))
   if (!key || !project) return { configured: false }
-  const host = clean(process.env.POSTHOG_API_HOST) || POSTHOG_HOST.replace('.i.posthog.com', '.posthog.com')
+  const host = clean(rawEnv('POSTHOG_API_HOST')) || POSTHOG_HOST.replace('.i.posthog.com', '.posthog.com')
 
   const { days: d = 30 } = await req.json().catch(() => ({}))
   const days = Math.max(1, Math.min(365, Math.floor(Number(d)) || 30))

@@ -28,9 +28,15 @@ export const handler = (fn) => async (req) => {
   }
 }
 
+// Netlify's own reader first (Functions 2.0), then process.env
+export const rawEnv = (name) => globalThis.Netlify?.env?.get?.(name) ?? process.env[name] ?? ''
+// which server settings this function can see — names and yes/no only, never values
+export const envReport = () => ['SUPABASE_SERVICE_ROLE_KEY', 'RAZORPAY_KEY_ID', 'RAZORPAY_KEY_SECRET', 'RAZORPAY_WEBHOOK_SECRET', 'POSTHOG_PERSONAL_API_KEY', 'POSTHOG_PROJECT_ID']
+  .map((n) => `${n} ${rawEnv(n) ? '✓' : '✗'}`).join(' · ')
+
 function env(name) {
   // pasted values often pick up a space, a line break or quotes — none of them belong in a key
-  const v = (process.env[name] || '').trim().replace(/^["']|["']$/g, '')
+  const v = String(rawEnv(name)).trim().replace(/^["']|["']$/g, '')
   if (!v) throw new HttpError(503, `Checkout isn’t switched on yet (${name} is missing on the server).`)
   return v
 }
