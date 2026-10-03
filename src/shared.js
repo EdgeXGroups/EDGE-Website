@@ -191,9 +191,10 @@ addEventListener('pointerdown', (e) => (pointer = { x: e.clientX, y: e.clientY }
 
 function detailHTML(d) {
   const i = designs.indexOf(d)
-  const next = designs[(i + 1) % designs.length]
   const imgs = galleryFor(d)
   const words = d.name.split(' ')
+  // every other design, starting with the one after this
+  const others = [...designs.slice(i + 1), ...designs.slice(0, i)]
   const stock = stockOf(d)
   const sizes = sizesOf(d)
   const chart = chartFor(d, sizeCharts)
@@ -236,20 +237,18 @@ function detailHTML(d) {
         <dl class="d-specs mono">${d.details.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>
       </div>
     </div>
-    <nav class="d-more" aria-label="All designs">
+    ${others.length ? `<nav class="d-more" aria-label="More designs">
       <div class="d-more__head">
-        <span class="mono d-more__label">All designs · ${pad(designs.length)}</span>
-        <a class="mono d-more__next" href="#/drop/${next.slug}">Next: ${esc(next.name)} →</a>
+        <span class="mono d-more__label">More designs · ${pad(others.length)}</span>
       </div>
       <div class="d-more__strip" data-lenis-prevent>
-        ${designs.map((x, k) => `<a class="d-more__card${x === d ? ' is-current' : ''}" href="#/drop/${x.slug}" style="--m-accent:${x.accent}" data-cursor="${x === d ? 'Viewing' : 'Open'}"${x === d ? ' aria-current="page"' : ''}>
+        ${others.map((x) => `<a class="d-more__card" href="#/drop/${x.slug}" style="--m-accent:${x.accent}" data-cursor="Open">
           <span class="d-more__img"><img src="${imagesFor(x)[0]}" alt="" loading="lazy"/>${badgeHTML(x)}</span>
-          <span class="mono d-more__n">${pad(k + 1)}${x === d ? ' · Viewing' : ''}</span>
           <span class="display d-more__name">${esc(x.name)}</span>
           ${priceHTML(x, 'd-more__price')}
         </a>`).join('')}
       </div>
-    </nav>`
+    </nav>` : ''}`
 }
 
 let slideKeys = null
@@ -296,10 +295,6 @@ function wireDetail() {
   const name = $('.d-name', content)
   const widest = Math.max(...$$('.line-mask > span', name).map((s) => s.getBoundingClientRect().width))
   if (widest > name.clientWidth) name.style.fontSize = `${(parseFloat(getComputedStyle(name).fontSize) * name.clientWidth) / widest * 0.97}px`
-  // start the designs strip on the piece being viewed
-  const more = $('.d-more__strip', content)
-  const cur = $('.is-current', more)
-  if (more && cur) more.scrollLeft += cur.getBoundingClientRect().left - more.getBoundingClientRect().left - parseFloat(getComputedStyle(more).paddingLeft)
 }
 
 function revealDetail() {

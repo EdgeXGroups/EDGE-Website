@@ -30,10 +30,10 @@ const before = `
       ${LINKS.map(([l, h, p]) => `<a href="${h}"${current(p)}>${l}</a>`).join('')}
     </nav>
     <div class="nav__right">
-      ${page === 'collection' ? '' : '<a href="/collection.html" class="nav__shop">Collection<i>→</i></a>'}
       <button class="nav__burger" aria-label="Open menu" aria-expanded="false"><span></span><span></span></button>
     </div>
   </header>
+  ${page === 'collection' ? '' : '<div class="navshop"><a href="/collection.html" class="nav__shop">Collection<i>→</i></a></div>'}
   <div class="menu" aria-hidden="true">
     <nav class="menu__links">
       ${LINKS.map(([l, h, p], i) => `<a href="${h}"${current(p)}><i>0${i + 1}</i><span>${l}</span></a>`).join('')}

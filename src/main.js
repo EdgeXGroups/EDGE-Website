@@ -143,7 +143,7 @@ async function runLoader() {
   lede.masks.forEach((m) => Object.assign(m.style, { padding: '0.12em 0.1em 0.28em', margin: '-0.12em -0.1em -0.28em' }))
   tl.from(lede.lines, { yPercent: 110, duration: 1.2, stagger: 0.08, ease: 'expo.out', onComplete: () => lede.revert() }, 0.9)
     .from('.hero__cta', { scale: 0, rotate: -180, duration: 1.2, ease: 'expo.out' }, 1.1)
-    .fromTo('.nav', { yPercent: -100 }, { yPercent: 0, duration: 1, ease: 'expo.out', clearProps: 'transform' }, 1)
+    .fromTo('.nav, .navshop', { yPercent: -100 }, { yPercent: 0, duration: 1, ease: 'expo.out', clearProps: 'transform' }, 1)
     .from('.hero__shop', { y: 20, opacity: 0, duration: 1, ease: 'expo.out' }, 1.15)
 }
 
@@ -307,13 +307,13 @@ function initSpotlight() {
     if (e.key === 'ArrowLeft') swap(-1)
   })
 
-  // keep the shader's rim line in sync with the CSS --rim (72% phone / 80% desktop)
+  // keep the shader's rim line in sync with the CSS --rim (64% phone / 80% desktop)
   const layout = () => {
     if (!spot) return
     const desktop = innerWidth >= 900
-    spot.uniforms.uRimY.value = desktop ? -0.3 : -0.22
+    spot.uniforms.uRimY.value = desktop ? -0.3 : -0.14
     spot.uniforms.uApY.value = desktop ? 0.34 : 0.36
-    show3d?.setRim(desktop ? 0.8 : 0.72)
+    show3d?.setRim(desktop ? 0.8 : 0.64)
     push()
   }
   layout()
