@@ -78,7 +78,7 @@ One dashboard, two sources:
 - **From the database** (works as soon as `supabase/migrations/0007_insights.sql` is run): revenue, orders, average order, unfinished checkouts, new accounts, most ordered designs, sizes sold, most wishlisted, what's sitting in bags.
 - **From PostHog** (free up to 1M events/month): visitors, average time on site, most viewed designs, average time spent on each design, add-to-bag rate per design (guests included), top pages, where visitors come from, devices. PostHog's own dashboard has much more (funnels, session recordings, heatmaps).
 
-The site sends these events (`src/analytics.js`): page views/leaves (automatic), `design_viewed`, `design_closed` (with seconds), `add_to_bag`, `remove_from_bag`, `wishlist_add/remove`, `checkout_started`, `order_paid`. PostHog loads after the page is idle, so it doesn't slow anything down.
+Events go through the site itself (`/ingest/*` → PostHog EU, in `netlify.toml`) so ad blockers don't drop them; the admin reads them back via `/api/admin-overview`. The site sends these events (`src/analytics.js`): page views/leaves (automatic), `design_viewed`, `design_closed` (with seconds), `add_to_bag`, `remove_from_bag`, `wishlist_add/remove`, `checkout_started`, `order_paid`. PostHog loads after the page is idle, so it doesn't slow anything down.
 
 ### PostHog setup (one time)
 1. Sign up at posthog.com (pick **US** or **EU** cloud) and create a project for the site.

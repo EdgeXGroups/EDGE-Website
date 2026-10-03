@@ -689,12 +689,13 @@ const pct = (x) => `${Math.round((x || 0) * 100)}%`
 
 async function visitorNumbers(days) {
   const { data: { session } } = await db.auth.getSession()
-  const res = await fetch('/api/insights', {
+  const res = await fetch('/api/admin-overview', {
     method: 'POST',
     headers: { 'content-type': 'application/json', authorization: `Bearer ${session?.access_token || ''}` },
     body: JSON.stringify({ days }),
   }).catch(() => null)
-  if (!res || res.status === 404) return { error: 'Visitor numbers load on the live site only (they come from a Netlify function).' }
+  if (!res) return { error: 'The request was blocked before it left your browser — usually an ad blocker or privacy extension. Allow this site in it and reload.' }
+  if (res.status === 404) return { error: `Visitor numbers come from a Netlify function, which isn't running at ${location.host} (local preview?). Open the admin on the live site.` }
   const body = await res.json().catch(() => ({}))
   return res.ok ? body : { error: body.error || `Couldn't load visitor numbers (${res.status}).` }
 }

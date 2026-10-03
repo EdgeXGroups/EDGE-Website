@@ -8,7 +8,7 @@
 //   add_to_bag / remove_from_bag  { slug, size, price }
 //   wishlist_add / wishlist_remove { slug }
 //   checkout_started { total, items } · order_paid { number, total }
-import { POSTHOG_KEY, POSTHOG_HOST } from './analytics.config.js'
+import { POSTHOG_KEY, POSTHOG_HOST, POSTHOG_PROXY } from './analytics.config.js'
 import { onUser } from './account.js'
 
 // only the real site counts — not `npm run dev` on someone's laptop
@@ -24,7 +24,8 @@ export function track(event, props = {}, opts) {
 function start() {
   import('posthog-js').then(({ default: posthog }) => {
     posthog.init(POSTHOG_KEY, {
-      api_host: POSTHOG_HOST,
+      api_host: POSTHOG_PROXY,                                       // via our domain (netlify.toml)
+      ui_host: POSTHOG_HOST.replace('.i.posthog.com', '.posthog.com'), // links back into PostHog's app
       person_profiles: 'identified_only', // anonymous visitors stay anonymous (and cheaper)
       capture_pageview: true,
       capture_pageleave: true,             // gives time on page / session length

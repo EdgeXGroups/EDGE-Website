@@ -1,4 +1,5 @@
-// POST /api/insights { days }  — admins only.
+// POST /api/admin-overview { days }  — admins only.
+// (Deliberately not called “insights”/“analytics”: ad blockers block URLs with those words.)
 // Reads visitor behaviour back out of PostHog for the admin's Insights tab:
 // visitors, time on site, most viewed designs, time spent on each, add-to-bag
 // rate (guests included), top pages, where visitors come from, devices.
@@ -70,4 +71,4 @@ export default handler(async (req) => {
   }
 })
 
-export const config = { path: '/api/insights' }
+export const config = { path: '/api/admin-overview' }

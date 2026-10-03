@@ -57,6 +57,19 @@
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
 
+# PostHog through our own domain (ad blockers block posthog.com). EU cloud.
+[[redirects]]
+  from = "/ingest/static/*"
+  to = "https://eu-assets.i.posthog.com/static/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/ingest/*"
+  to = "https://eu.i.posthog.com/:splat"
+  status = 200
+  force = true
+
 # Pretty URLs: /collection, /team, /contact
 [[redirects]]
   from = "/collection"
