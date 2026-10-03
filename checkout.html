@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#070707" />
+  <meta name="robots" content="noindex" />
+  <title>Checkout — EDGE</title>
+  <link rel="icon" href="/brand/edge-mark.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+</head>
+<body class="page-sub page-checkout" data-page="checkout">
+  <div class="grain" aria-hidden="true"></div>
+  <div class="cursor" aria-hidden="true"><span class="cursor__label"></span></div>
+
+  <main id="top" class="sub">
+    <section class="sub__head">
+      <p class="mono eyebrow">Checkout</p>
+      <h1 class="display sub__title">Almost <em class="serif">yours.</em></h1>
+    </section>
+
+    <div class="co" data-state="loading">
+      <form class="co__form" novalidate>
+        <div class="co__who">
+          <p data-guest>Have an account? <button type="button" class="co__link" data-signin>Sign in with Google</button> — or carry on as a guest.</p>
+          <p data-member hidden>Signed in as <b data-email></b></p>
+        </div>
+
+        <fieldset class="co__set">
+          <legend class="mono">Contact</legend>
+          <label class="co__f"><span class="mono">Email</span><input name="email" type="email" autocomplete="email" required /></label>
+          <label class="co__f"><span class="mono">Mobile number</span><input name="phone" type="tel" inputmode="numeric" autocomplete="tel-national" placeholder="10 digits" maxlength="14" required /></label>
+        </fieldset>
+
+        <fieldset class="co__set">
+          <legend class="mono">Delivery address</legend>
+          <div class="co__saved" hidden></div>
+          <label class="co__f co__f--full"><span class="mono">Full name</span><input name="name" autocomplete="name" required /></label>
+          <label class="co__f co__f--full"><span class="mono">House / flat, street</span><input name="line1" autocomplete="address-line1" required /></label>
+          <label class="co__f co__f--full"><span class="mono">Area, landmark <i>(optional)</i></span><input name="line2" autocomplete="address-line2" /></label>
+          <label class="co__f"><span class="mono">City</span><input name="city" autocomplete="address-level2" required /></label>
+          <label class="co__f"><span class="mono">PIN code</span><input name="pincode" inputmode="numeric" autocomplete="postal-code" maxlength="6" required /></label>
+          <label class="co__f co__f--full"><span class="mono">State</span><select name="state" autocomplete="address-level1" required></select></label>
+          <label class="co__check" data-member hidden><input type="checkbox" name="save" checked /> <span>Save this address for next time</span></label>
+        </fieldset>
+
+        <p class="co__error" role="alert"></p>
+        <button class="btn co__pay" type="submit"><span>Pay</span></button>
+        <p class="mono co__fine">Secure payment by Razorpay — UPI, cards, netbanking and wallets. We never see your card details.</p>
+      </form>
+
+      <aside class="co__summary">
+        <div class="co__sumhead"><h2 class="mono">Order summary</h2><button type="button" class="co__link mono" data-editbag>Edit bag</button></div>
+        <ul class="co__items"></ul>
+        <div class="co__rows">
+          <div><span>Subtotal</span><b data-sub></b></div>
+          <div><span>Shipping</span><b data-ship></b></div>
+          <div class="co__total"><span>Total</span><b data-total></b></div>
+        </div>
+        <p class="mono co__note" data-shipnote></p>
+      </aside>
+    </div>
+
+    <section class="co__done" hidden>
+      <div class="co__tick" aria-hidden="true">✓</div>
+      <p class="mono eyebrow">Order <span data-number></span></p>
+      <h2 class="display">It’s <em class="serif">yours.</em></h2>
+      <p class="sub__intro">Payment received. Razorpay has emailed your receipt, and we’ll message you on <b data-phone></b> when it ships.</p>
+      <div class="co__doneactions">
+        <a class="btn" href="/account.html#orders" data-member hidden><span>See your orders</span></a>
+        <a class="btn btn--ghostline" href="/collection.html"><span>Keep browsing</span></a>
+      </div>
+    </section>
+
+    <section class="co__empty" hidden>
+      <h2 class="display">Your bag is <em class="serif">empty.</em></h2>
+      <a class="btn" href="/collection.html"><span>Browse the collection</span></a>
+    </section>
+  </main>
+
+  <script type="module" src="/src/checkout.js"></script>
+</body>
+</html>

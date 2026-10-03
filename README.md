@@ -33,6 +33,8 @@ Designs, the showroom, contact details and the team are edited at **yoursite.com
 - **Showroom:** pick the three designs on the glass (slot 1 starts in the light).
 - **Contact:** Instagram, email, phone, WhatsApp, location, tagline, drop name.
 - **Team:** names, roles, lines, photos.
+- **Orders:** every paid order (“To ship”), with items, sizes, address and phone. Set it to Shipped (put the tracking number in the note), then Delivered. Refunds happen in the Razorpay dashboard.
+- **Contact & shop → Shipping:** the flat shipping fee and the order value that ships free.
 
 ### Where the data lives — Supabase
 Project `vpjntbsednknihxgntje` (account edgexgroups@gmail.com). Tables `designs`, `settings`, `team`, `admins`; images in the public storage bucket `media`. Row-level security: anyone can read the site's content, only users listed in `admins` can change anything.
@@ -42,11 +44,34 @@ The public site reads everything with one call to the `site_content()` function 
 1. **Create the tables:** Supabase → SQL Editor → New query → paste `supabase/migrations/0001_site_content.sql` → Run.
 2. **Create the admin login:** Authentication → Users → Add user → Create new user (email + password, tick *Auto Confirm User*).
 3. **Make it an admin:** SQL Editor → run `supabase/migrations/0002_make_admin.sql` (edit the email in it first if needed).
-4. **Lock sign-ups:** Authentication → Sign In / Providers → turn off *Allow new users to sign up* (only admins you add by hand should exist).
+4. **Sign-ups:** with the shop live, customers sign up through Google, so *Allow new users to sign up* must stay **on**. That's safe: editing the site needs a row in `admins`, which only you add.
 5. **Password-reset links:** Authentication → URL Configuration → set *Site URL* to the live site and add `https://<your-site>/admin` (and `http://localhost:5173/admin` for local testing) to *Redirect URLs*.
 6. Open `/admin`, sign in, press **Copy into Supabase** to move the 8 built-in designs into the database.
 
 To add another admin later: create the user (step 2) and run 0002 with their email.
+
+## Shop — accounts, wishlist, bag, checkout (Razorpay)
+- **Customers** sign in with Google (Supabase Auth). The Supabase library only loads for people who are signed in or signing in.
+- **Bag:** kept in the browser, so guests can check out; for signed-in customers it's also saved in `cart_items` and follows them across devices.
+- **Wishlist, saved addresses, order history:** signed-in only, on `/account`.
+- **Checkout** (`/checkout`): contact + address → `/api/create-order` prices the bag *on the server* from the database (the browser's prices are never trusted), opens a Razorpay order and a pending order row → Razorpay's payment window → `/api/verify-payment` checks Razorpay's signature and marks the order paid. `/api/razorpay-webhook` does the same from Razorpay's side in case the customer closes the tab.
+- Server code: `netlify/functions/*` (Netlify Functions, deployed automatically) + `netlify/lib/shop.mjs`. Tables: `supabase/migrations/0006_accounts_orders.sql`.
+- Checkout needs the functions, so it works on Netlify (live site and deploy previews), not under `npm run dev`. To run everything locally: `npx netlify dev`.
+
+### Shop setup (one time)
+1. **Database:** Supabase → SQL Editor → run `supabase/migrations/0006_accounts_orders.sql`.
+2. **Google sign-in:**
+   - Google Cloud Console → APIs & Services → OAuth consent screen (External, app name EDGE, your email) → Credentials → Create credentials → OAuth client ID → *Web application*. Authorized redirect URI: `https://vpjntbsednknihxgntje.supabase.co/auth/v1/callback`.
+   - Supabase → Authentication → Sign In / Providers → Google → enable, paste the Client ID and Client secret, save. Make sure *Allow new users to sign up* is on.
+   - Supabase → Authentication → URL Configuration → Redirect URLs: add `https://edgexgroup.netlify.app/**`, `https://*--edgexgroup.netlify.app/**` (deploy previews) and `http://localhost:5173/**`.
+3. **Razorpay (test mode first):** sign up at razorpay.com → switch to *Test Mode* → Account & Settings → API Keys → Generate. Webhooks → Add: URL `https://edgexgroup.netlify.app/api/razorpay-webhook`, a secret you make up, events `payment.captured`, `payment.failed`, `order.paid`.
+4. **Netlify → Site configuration → Environment variables** (never in the code):
+   - `SUPABASE_SERVICE_ROLE_KEY` — Supabase → Project Settings → API Keys → *secret* key
+   - `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET` — from step 3
+   - `RAZORPAY_WEBHOOK_SECRET` — the webhook secret from step 3
+   Then *Deploys → Trigger deploy*.
+5. **Test:** add something to the bag → Checkout → pay with Razorpay's test details (UPI `success@razorpay`, or a test card from Razorpay's docs). The order shows in Admin → Orders as “To ship”.
+6. **Going live:** finish Razorpay KYC, generate *Live* keys, swap the two key variables (and make a live-mode webhook with the same URL), redeploy.
 
 ## Adding a new design without the admin
 The admin is the normal way. The scripts below do the same processing offline and write the files into the repo (then add the design to `src/content.defaults.js`):

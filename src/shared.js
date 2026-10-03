@@ -7,6 +7,7 @@ import { SplitText } from 'gsap/SplitText'
 import Lenis from 'lenis'
 import { brand, designs, sizeCharts } from './content.js'
 import { imagesFor, frontBack, galleryFor } from './mockup.js'
+import { heartHTML, paintHearts, wireBuy, setScrollLock } from './shop-ui.js'
 import { SIZES, TAGS, STOCK, chartFor, priceHTML, priceNum, stockOf, buyable, tagsOf, sizesOf, badgeHTML } from './commerce.js'
 
 gsap.registerPlugin(ScrollTrigger, SplitText)
@@ -59,6 +60,7 @@ if (lenis) {
   gsap.ticker.add((t) => lenis.raf(t * 1000))
   gsap.ticker.lagSmoothing(0)
 }
+setScrollLock({ stop: () => lenis?.stop(), start: () => lenis?.start() })
 export const scrollTo = (target, opts = {}) =>
   lenis ? lenis.scrollTo(target, { duration: 1.4, ...opts }) : (target === 0 ? scrollTo0() : $(target)?.scrollIntoView({ behavior: opts.immediate ? 'auto' : 'smooth' }))
 const scrollTo0 = () => window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -198,6 +200,8 @@ function detailHTML(d) {
   const stock = stockOf(d)
   const sizes = sizesOf(d)
   const chart = chartFor(d, sizeCharts)
+  const canBuy = buyable(d) && priceNum(d) != null
+  const askLabel = stock === 'sold_out' ? 'Ask about a restock' : stock === 'coming_soon' ? 'Tell me when it drops' : 'Ask to order'
   const badges = [...(stock !== 'in_stock' ? [[stock, STOCK[stock]]] : []), ...tagsOf(d).map((t) => [t, TAGS[t]])]
   const note = { few_left: 'Only a few left — don’t sleep on it.', sold_out: 'Sold out. Ask us — if enough of you do, it comes back.', coming_soon: 'Coming soon. Ask and we’ll tell you the moment it drops.' }[stock]
   return `
@@ -228,10 +232,17 @@ function detailHTML(d) {
                 <tbody>${chart.rows.map((r) => `<tr class="${sizes.includes(r[0]) ? '' : 'is-out'}">${[r[0], ...chart.columns.map((_, k) => r[k + 1] ?? '')].map((c) => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody>
               </table>${chart.note ? `<p class="mono">${esc(chart.note)}</p>` : ''}</div>` : ''}
           </div>` : ''}
-          <div class="d-actions">
-            <a class="btn btn--accent d-ask" href="/contact.html?design=${d.slug}" data-label="${stock === 'sold_out' ? 'Ask about a restock' : stock === 'coming_soon' ? 'Tell me when it drops' : 'Ask to order'}"><span>${stock === 'sold_out' ? 'Ask about a restock' : stock === 'coming_soon' ? 'Tell me when it drops' : 'Ask to order'}</span></a>
-            ${links.instagram ? `<a class="btn btn--ghost" href="${links.instagram.href}" target="_blank" rel="noopener"><span>DM on Instagram</span></a>` : ''}
+          ${canBuy ? `
+          <div class="d-actions d-actions--buy">
+            <button class="btn btn--accent d-addbag" type="button"><span>Add to bag</span></button>
+            ${heartHTML(d.slug, 'heart--big')}
           </div>
+          <a class="mono d-asklink d-ask" href="/contact.html?design=${d.slug}">Questions about this piece? Ask us →</a>` : `
+          <div class="d-actions d-actions--buy">
+            <a class="btn btn--accent d-ask" href="/contact.html?design=${d.slug}" data-label="${askLabel}"><span>${askLabel}</span></a>
+            ${heartHTML(d.slug, 'heart--big')}
+          </div>
+          ${links.instagram ? `<a class="mono d-asklink" href="${links.instagram.href}" target="_blank" rel="noopener">Or DM us on Instagram →</a>` : ''}`}
         </div>
         <div class="d-story">${d.story.map((p) => `<p>${esc(p)}</p>`).join('')}</div>
         <dl class="d-specs mono">${d.details.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>
@@ -283,7 +294,7 @@ function wireDetail() {
     const u = new URL(ask.href)
     u.searchParams.set('size', e.target.value)
     ask.href = u.pathname + u.search
-    $('span', ask).textContent = `${ask.dataset.label} · ${e.target.value}`
+    if (ask.dataset.label) $('span', ask).textContent = `${ask.dataset.label} · ${e.target.value}`
   })
   const guideBtn = $('.d-guide__open', content)
   guideBtn?.addEventListener('click', () => {
@@ -327,6 +338,8 @@ async function openDesign(d) {
   scroller.scrollTop = 0
   gsap.set(scroller, { opacity: 1 })
   wireDetail()
+  wireBuy(content, d)
+  paintHearts(content)
   gsap.set(wipe, { clipPath: 'inset(0% 0% 0% 0%)' })
   gsap.to(wipe, { clipPath: 'inset(0% 0% 100% 0%)', duration: reduced ? 0.01 : 0.9, ease: 'expo.inOut' })
   revealDetail()

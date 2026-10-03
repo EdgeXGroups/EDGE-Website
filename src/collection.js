@@ -7,6 +7,7 @@ import {
   $, $$, fine, reduced, pad, esc, fillBrand, mediaHTML, lenis, initCursor, startRouter, riseLines, pageEnter,
   gsap, ScrollTrigger,
 } from './shared.js'
+import { heartHTML } from './shop-ui.js'
 import { SIZES, money, priceNum, offOf, buyable, tagsOf, sizesOf, priceHTML, badgeHTML } from './commerce.js'
 
 gsap.registerPlugin(Flip)
@@ -25,7 +26,7 @@ $('.chips').innerHTML = cats
 grid.innerHTML = designs
   .map((d, i) => `
   <a class="item${buyable(d) ? '' : ' is-out'}" href="#/drop/${d.slug}" data-slug="${d.slug}" data-cursor="Read story" style="--m-accent:${d.accent}" aria-label="${esc(d.name)} — read the story">
-    <div class="item__media">${mediaHTML(d, { eager: i < 4 })}${badgeHTML(d)}</div>
+    <div class="item__media">${mediaHTML(d, { eager: i < 4 })}${badgeHTML(d)}${heartHTML(d.slug, 'heart--card')}</div>
     <div class="item__meta">
       <span class="item__num mono">${pad(i + 1)}</span>
       <span class="item__name">${esc(d.name)}</span>

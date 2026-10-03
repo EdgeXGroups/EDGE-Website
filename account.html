@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#070707" />
+  <meta name="robots" content="noindex" />
+  <title>Your account — EDGE</title>
+  <link rel="icon" href="/brand/edge-mark.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+</head>
+<body class="page-sub page-account" data-page="account">
+  <div class="grain" aria-hidden="true"></div>
+  <div class="cursor" aria-hidden="true"><span class="cursor__label"></span></div>
+
+  <main id="top" class="sub">
+    <section class="sub__head">
+      <p class="mono eyebrow" data-hello>Your account</p>
+      <h1 class="display sub__title" data-title>Your <em class="serif">account.</em></h1>
+    </section>
+
+    <section class="acct acct--out" hidden>
+      <p class="sub__intro">Sign in to save designs to your wishlist, keep your bag on every device and follow your orders. No password — just your Google account.</p>
+      <button class="btn acct__google" type="button" data-signin><span>Continue with Google</span></button>
+    </section>
+
+    <section class="acct acct--in" hidden>
+      <div class="acct__bar">
+        <div class="acct__tabs" role="tablist">
+          <button role="tab" data-tab="orders" aria-selected="true">Orders</button>
+          <button role="tab" data-tab="wishlist" aria-selected="false">Wishlist<sup data-wcount></sup></button>
+          <button role="tab" data-tab="addresses" aria-selected="false">Addresses</button>
+        </div>
+        <button class="mono acct__out" type="button" data-signout>Sign out</button>
+      </div>
+      <div class="acct__panel" data-panel="orders"></div>
+      <div class="acct__panel" data-panel="wishlist" hidden></div>
+      <div class="acct__panel" data-panel="addresses" hidden></div>
+    </section>
+  </main>
+
+  <script type="module" src="/src/account-page.js"></script>
+</body>
+</html>
