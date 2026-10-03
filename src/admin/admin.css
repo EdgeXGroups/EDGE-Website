@@ -48,6 +48,8 @@ input[type='color'] { width: 100%; height: 44px; border: 1px solid var(--line); 
 .seg label { padding: 7px 12px; border-radius: 99px; cursor: pointer; font-family: var(--f-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; }
 .seg input { display: none; }
 .seg label:has(input:checked) { background: var(--bone); color: var(--ink); }
+.seg--wrap { display: flex; flex-wrap: wrap; border-radius: 14px; }
+.seg--wrap label { border: 1px solid transparent; }
 
 /* shell */
 .top { position: sticky; top: 0; z-index: 10; background: rgba(7, 7, 7, 0.92); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
@@ -112,3 +114,14 @@ main.wrap { max-width: 980px; margin: 0 auto; padding: 22px 16px 120px; display:
 .toast { position: fixed; left: 50%; bottom: 22px; z-index: 50; transform: translate(-50%, 20px); opacity: 0; pointer-events: none; padding: 12px 18px; border-radius: 99px; background: var(--bone); color: var(--ink); font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; transition: opacity 0.3s, transform 0.3s; max-width: calc(100% - 32px); text-align: center; }
 .toast.is-on { opacity: 1; transform: translate(-50%, 0); }
 .toast.is-err { background: var(--danger); }
+
+/* size chart editor */
+.ctable-wrap { overflow-x: auto; margin: 0 -4px; }
+.ctable { border-collapse: separate; border-spacing: 4px; min-width: 100%; }
+.ctable th, .ctable td { vertical-align: middle; }
+.ctable th { text-align: left; font-family: var(--f-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--mute); font-weight: 400; white-space: nowrap; }
+.ctable th:first-child { padding-left: 4px; }
+.ctable th input { width: 92px; margin-right: 4px; }
+.ctable td input { width: 100%; min-width: 64px; }
+.ctable th .icon { width: 26px; height: 26px; vertical-align: middle; }
+.ctable input { padding: 8px 10px; border-radius: 8px; }

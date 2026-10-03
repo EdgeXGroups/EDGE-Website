@@ -5,8 +5,9 @@ import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { SplitText } from 'gsap/SplitText'
 import Lenis from 'lenis'
-import { brand, designs } from './content.js'
+import { brand, designs, sizeCharts } from './content.js'
 import { imagesFor, frontBack, galleryFor } from './mockup.js'
+import { SIZES, TAGS, STOCK, chartFor, priceHTML, priceNum, stockOf, buyable, tagsOf, sizesOf, badgeHTML } from './commerce.js'
 
 gsap.registerPlugin(ScrollTrigger, SplitText)
 
@@ -40,9 +41,6 @@ export function fillBrand() {
 /* ───────── Cards ───────── */
 
 // Front image, plus the back revealed on hover (or on scroll for touch).
-// ₹1,499 — or '' when the design has no price yet
-const inr = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })
-export const priceOf = (d) => (d.price == null || d.price === '' || isNaN(d.price) ? '' : inr.format(d.price))
 
 export function mediaHTML(d, { eager = false } = {}) {
   const [front, back] = frontBack(d)
@@ -196,7 +194,11 @@ function detailHTML(d) {
   const next = designs[(i + 1) % designs.length]
   const imgs = galleryFor(d)
   const words = d.name.split(' ')
-  const price = priceOf(d)
+  const stock = stockOf(d)
+  const sizes = sizesOf(d)
+  const chart = chartFor(d, sizeCharts)
+  const badges = [...(stock !== 'in_stock' ? [[stock, STOCK[stock]]] : []), ...tagsOf(d).map((t) => [t, TAGS[t]])]
+  const note = { few_left: 'Only a few left — don’t sleep on it.', sold_out: 'Sold out. Ask us — if enough of you do, it comes back.', coming_soon: 'Coming soon. Ask and we’ll tell you the moment it drops.' }[stock]
   return `
     <div class="d-layout">
       <div class="d-gallery" style="--m-accent:${d.accent}">
@@ -211,13 +213,27 @@ function detailHTML(d) {
         <div class="d-meta mono"><span>No. ${pad(i + 1)} — ${esc(d.category || brand.drop)}</span><span>${esc(d.type)}</span></div>
         <h2 class="display d-name">${words.map((w) => `<span class="line-mask"><span>${esc(w)}</span></span>`).join('')}</h2>
         <p class="d-tag">${esc(d.tagline)}</p>
-        ${price ? `<p class="d-price"><span class="mono">Price</span>${price}</p>` : ''}
+        <div class="d-buy">
+          ${badges.length ? `<div class="d-badges">${badges.map(([k, l]) => `<span class="badge badge--${k}">${l}</span>`).join('')}</div>` : ''}
+          ${priceNum(d) != null ? `<div class="d-price">${priceHTML(d)}<span class="mono d-price__tax">Inclusive of all taxes</span></div>` : ''}
+          ${note ? `<p class="d-note d-note--${stock}">${note}</p>` : ''}
+          ${sizes.length && buyable(d) ? `
+          <div class="d-sizes">
+            <div class="d-sizes__head"><span class="mono">Select size</span>${chart ? '<button class="mono d-guide__open" type="button" aria-expanded="false">Size guide</button>' : ''}</div>
+            <div class="d-sizes__list" role="radiogroup" aria-label="Size">${SIZES.map((s) => `<label class="d-size${sizes.includes(s) ? '' : ' is-out'}"><input type="radio" name="size" value="${s}" ${sizes.includes(s) ? '' : 'disabled'}/><span>${s}</span></label>`).join('')}</div>
+            ${chart ? `<div class="d-guide" hidden>
+              <table class="mono"><caption>${esc(chart.name)} · ${chart.unit === 'cm' ? 'cm' : 'inches'}</caption>
+                <thead><tr><th>Size</th>${chart.columns.map((h) => `<th>${esc(h)}</th>`).join('')}</tr></thead>
+                <tbody>${chart.rows.map((r) => `<tr class="${sizes.includes(r[0]) ? '' : 'is-out'}">${[r[0], ...chart.columns.map((_, k) => r[k + 1] ?? '')].map((c) => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody>
+              </table>${chart.note ? `<p class="mono">${esc(chart.note)}</p>` : ''}</div>` : ''}
+          </div>` : ''}
+          <div class="d-actions">
+            <a class="btn btn--accent d-ask" href="/contact.html?design=${d.slug}" data-label="${stock === 'sold_out' ? 'Ask about a restock' : stock === 'coming_soon' ? 'Tell me when it drops' : 'Ask to order'}"><span>${stock === 'sold_out' ? 'Ask about a restock' : stock === 'coming_soon' ? 'Tell me when it drops' : 'Ask to order'}</span></a>
+            ${links.instagram ? `<a class="btn btn--ghost" href="${links.instagram.href}" target="_blank" rel="noopener"><span>DM on Instagram</span></a>` : ''}
+          </div>
+        </div>
         <div class="d-story">${d.story.map((p) => `<p>${esc(p)}</p>`).join('')}</div>
         <dl class="d-specs mono">${d.details.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>
-        <div class="d-actions">
-          <a class="btn btn--accent" href="/contact.html?design=${d.slug}"><span>Ask about this piece</span></a>
-          ${links.instagram ? `<a class="btn btn--ghost" href="${links.instagram.href}" target="_blank" rel="noopener"><span>DM on Instagram</span></a>` : ''}
-        </div>
       </div>
     </div>
     <nav class="d-more" aria-label="All designs">
@@ -227,9 +243,10 @@ function detailHTML(d) {
       </div>
       <div class="d-more__strip" data-lenis-prevent>
         ${designs.map((x, k) => `<a class="d-more__card${x === d ? ' is-current' : ''}" href="#/drop/${x.slug}" style="--m-accent:${x.accent}" data-cursor="${x === d ? 'Viewing' : 'Open'}"${x === d ? ' aria-current="page"' : ''}>
-          <span class="d-more__img"><img src="${imagesFor(x)[0]}" alt="" loading="lazy"/></span>
-          <span class="mono d-more__n">${pad(k + 1)}${x === d ? ' · Viewing' : priceOf(x) ? ` · ${priceOf(x)}` : ''}</span>
+          <span class="d-more__img"><img src="${imagesFor(x)[0]}" alt="" loading="lazy"/>${badgeHTML(x)}</span>
+          <span class="mono d-more__n">${pad(k + 1)}${x === d ? ' · Viewing' : ''}</span>
           <span class="display d-more__name">${esc(x.name)}</span>
+          ${priceHTML(x, 'd-more__price')}
         </a>`).join('')}
       </div>
     </nav>`
@@ -261,6 +278,20 @@ function wireDetail() {
   figs.forEach((f) => f.addEventListener('click', () => openLightbox($('img', f).src)))
   const hint = $('.d-hint', content)
   if (hint) gsap.fromTo(hint, { x: 0 }, { x: 10, repeat: -1, yoyo: true, duration: 0.8, ease: 'sine.inOut' })
+  // size: carried into the contact form, so the message already says what they want
+  const ask = $('.d-ask', content)
+  $('.d-sizes__list', content)?.addEventListener('change', (e) => {
+    const u = new URL(ask.href)
+    u.searchParams.set('size', e.target.value)
+    ask.href = u.pathname + u.search
+    $('span', ask).textContent = `${ask.dataset.label} · ${e.target.value}`
+  })
+  const guideBtn = $('.d-guide__open', content)
+  guideBtn?.addEventListener('click', () => {
+    const g = $('.d-guide', content)
+    g.hidden = !g.hidden
+    guideBtn.setAttribute('aria-expanded', !g.hidden)
+  })
   // long words (ENOUGH, RETREAT…) shrink the title until they fit the column
   const name = $('.d-name', content)
   const widest = Math.max(...$$('.line-mask > span', name).map((s) => s.getBoundingClientRect().width))

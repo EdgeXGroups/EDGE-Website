@@ -27,6 +27,9 @@ Designs, the showroom, contact details and the team are edited at **yoursite.com
 
 - **Designs:** add (upload the front+back mockup; the Figma print export is optional and powers the 3D tee), edit text/colours, reorder, delete.
   Images are processed in the browser: the mockup is split, plain backgrounds removed, the print lined up automatically.
+- **Price & availability** (per design): price, original price/MRP (shown struck through with the % off), sizes in stock, availability (in stock / few left / sold out / coming soon) and badges (Bestseller, New, Limited). These drive the Collection page's sort and filters and the size picker on each story. Each design can point at a **size chart** by name.
+- **Size charts:** one per blank/manufacturer (sizes × measurements, inches or cm, plus a note). Designs reference them by name; renaming a chart updates its designs.
+- Needs `supabase/migrations/0004_shop.sql` and `0005_size_charts.sql` run once. `supabase/seed/shop_starter.sql` fills in starter prices, a few discounts, sizes, badges and two placeholder size charts.
 - **Showroom:** pick the three designs on the glass (slot 1 starts in the light).
 - **Contact:** Instagram, email, phone, WhatsApp, location, tagline, drop name.
 - **Team:** names, roles, lines, photos.

@@ -32,6 +32,7 @@ const live = remote?.designs?.length ? remote : null
 export const brand = { ...defaults.brand, ...(remote?.brand || {}) }
 export const designs = live ? live.designs : defaults.designs
 export const team = remote?.team?.length ? remote.team : defaults.team
+export const sizeCharts = remote?.size_charts || []
 export const { manifesto, pillars, process } = defaults
 
 // The showroom: three slugs chosen in the admin, else designs marked `featured`, else the first three.

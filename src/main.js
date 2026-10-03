@@ -5,9 +5,10 @@ import { createHero } from './hero.js'
 import { createSpotlight } from './spotlight.js'
 import { createShowroom3D } from './showroom3d.js'
 import { frontBack } from './mockup.js'
+import { priceHTML } from './commerce.js'
 import { Color } from 'three'
 import {
-  $, $$, reduced, pad, esc, priceOf, fillBrand, lenis, scrollTo,
+  $, $$, reduced, pad, esc, fillBrand, lenis, scrollTo,
   initCursor, startRouter, riseLines, arrivedFromSite, pageEnter, gsap, ScrollTrigger, SplitText,
 } from './shared.js'
 
@@ -70,7 +71,7 @@ function setCaption(d) {
   $('.spot__num').textContent = `No. ${pad(designs.indexOf(d) + 1)} — ${d.category || brand.drop}`
   $('.spot__name').textContent = d.name
   $('.spot__tag').textContent = d.tagline
-  $('.spot__price').textContent = priceOf(d)
+  $('.spot__price').innerHTML = priceHTML(d)
   $('.spot__cta').href = `#/drop/${d.slug}`
 }
 

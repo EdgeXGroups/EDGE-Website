@@ -11,11 +11,17 @@ form.topic.innerHTML =
   `<optgroup label="A design">${designs.map((d) => `<option value="${esc(d.name)}" data-slug="${d.slug}">${esc(d.name)}</option>`).join('')}</optgroup>` +
   `<optgroup label="Something else">${general.map((g) => `<option>${esc(g)}</option>`).join('')}</optgroup>`
 
-const asked = new URLSearchParams(location.search).get('design')
+const q = new URLSearchParams(location.search)
+const asked = q.get('design')
+const size = /^(XS|S|M|L|XL|XXL)$/.test(q.get('size') || '') ? q.get('size') : null
 const preset = asked && [...form.topic.options].find((o) => o.dataset.slug === asked)
 if (preset) {
   preset.selected = true
   form.message.placeholder = `What would you like to know about ${preset.value}?`
+  // came from "Ask to order" with a size picked: start the message for them
+  if (size) form.message.value = `Hi! I'd like ${preset.value} in size ${size}.
+
+`
 } else {
   form.topic.value = 'Just saying hi'
 }
@@ -29,7 +35,7 @@ form.addEventListener('submit', (e) => {
     if (bad) ok = false
   })
   if (!ok) return gsap.fromTo(form, { x: -8 }, { x: 0, duration: 0.6, ease: 'elastic.out(1, 0.3)' })
-  const subject = `[EDGE] ${form.topic.value} — ${form.name.value.trim()}`
+  const subject = `[EDGE] ${form.topic.value}${size && preset?.selected ? ` (size ${size})` : ''} — ${form.name.value.trim()}`
   location.href = `${links.email.href}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(form.message.value.trim())}`
 })
 

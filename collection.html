@@ -27,13 +27,44 @@
 
     <div class="archive__bar">
       <div class="chips" role="group" aria-label="Filter by category"></div>
-      <div class="views" role="group" aria-label="Layout">
-        <button class="views__btn is-on" data-view="grid" aria-pressed="true">Grid</button>
-        <button class="views__btn" data-view="list" aria-pressed="false">Index</button>
+      <div class="bar__tools">
+        <div class="sortwrap">
+          <button class="tool tool--sort" aria-haspopup="true" aria-expanded="false"><span class="tool__k">Sort</span><span class="tool__v" data-sort-label>Recommended</span></button>
+        </div>
+        <button class="tool tool--filter" aria-haspopup="dialog">Filter<sup data-fcount></sup></button>
+        <div class="views" role="group" aria-label="Layout">
+          <button class="views__btn is-on" data-view="grid" aria-pressed="true">Grid</button>
+          <button class="views__btn" data-view="list" aria-pressed="false">Index</button>
+        </div>
       </div>
+    </div>
+    <div class="archive__status">
+      <p class="mono archive__count" aria-live="polite"></p>
+      <div class="pills"></div>
     </div>
 
     <section class="archive__grid" data-view="grid"></section>
+    <div class="archive__empty" hidden>
+      <p class="display">Nothing <em class="serif">fits</em> that.</p>
+      <p class="archive__intro">Try fewer filters — or ask us, we might be printing it next.</p>
+      <button class="btn" data-clear><span>Clear filters</span></button>
+    </div>
+
+    <!-- sort + filter: a menu / side drawer on laptops, bottom sheets on phones -->
+    <div class="sheetbg" hidden></div>
+    <div class="psheet psheet--sort" role="dialog" aria-label="Sort by" hidden>
+      <p class="mono psheet__title">Sort by</p>
+      <div class="sortlist" role="radiogroup"></div>
+    </div>
+    <div class="psheet psheet--filter" role="dialog" aria-label="Filters" hidden>
+      <div class="psheet__head"><p class="mono psheet__title">Filters</p><button class="mono psheet__clear" data-clear>Clear all</button><button class="psheet__x" aria-label="Close">×</button></div>
+      <div class="fgroups" data-lenis-prevent></div>
+      <div class="psheet__foot"><button class="btn psheet__apply"><span>Show designs</span></button></div>
+    </div>
+    <div class="shopbar" role="group" aria-label="Sort and filter">
+      <button class="shopbar__btn" data-open="sort"><span>Sort</span><small data-sort-label>Recommended</small></button>
+      <button class="shopbar__btn" data-open="filter"><span>Filter<sup data-fcount></sup></span><small data-fsum>All designs</small></button>
+    </div>
     <div class="archive__float" aria-hidden="true"><img alt="" /></div>
 
     <a class="archive__cta" href="/contact.html" data-cursor="Say hi">

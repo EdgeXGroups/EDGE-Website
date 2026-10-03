@@ -7,6 +7,7 @@ import './admin.css'
 import { createClient } from '@supabase/supabase-js'
 import * as D from '../content.defaults.js'
 import { SUPABASE_URL, SUPABASE_KEY } from '../supabase.config.js'
+import { SIZES, TAGS, STOCK, priceOf, offOf, stockOf } from '../commerce.js'
 import { loadImage, splitMockup, singleView, alignPrint, garmentColour, portrait, photo, toWebp } from './process.js'
 
 const $ = (s, r = document) => r.querySelector(s)
@@ -26,6 +27,8 @@ function explain(err) {
   if (/row-level security|permission denied|violates.*policy/i.test(m)) return 'This account isn’t allowed to edit the site.'
   if (/Invalid login credentials/i.test(m)) return 'Wrong email or password.'
   if (/Could not find the 'price' column/i.test(m)) return 'Prices need one database update — run supabase/migrations/0003_price.sql in the Supabase SQL editor.'
+  if (/size_chart|size_charts/i.test(m) && /Could not find|does not exist/i.test(m)) return 'Size charts need one database update — run supabase/migrations/0005_size_charts.sql in the Supabase SQL editor.'
+  if (/Could not find the '(mrp|tags|sizes|stock)' column/i.test(m)) return 'The shop fields need one database update — run supabase/migrations/0004_shop.sql in the Supabase SQL editor.'
   if (/relation .* does not exist|Could not find the (table|function)/i.test(m)) return 'The database isn’t set up yet — run supabase/migrations/0001_site_content.sql.'
   if (/Failed to fetch|NetworkError/i.test(m)) return 'No connection — check your internet and try again.'
   return m
@@ -55,12 +58,17 @@ function toast(msg, err = false) {
 
 let data = null
 let starter = false // true while Supabase is empty and we're showing the built-in content
+let chartsReady = true
 async function loadData() {
-  const [d, t, s] = await Promise.all([
+  const [d, t, s, c] = await Promise.all([
     db.from('designs').select('*').order('position'),
     db.from('team').select('*').order('position'),
     db.from('settings').select('*').eq('id', 1).maybeSingle(),
+    db.from('size_charts').select('*').order('position'),
   ])
+  // size charts arrive with migration 0005; until then the tab explains what to run
+  chartsReady = !c.error
+  const charts = (c.data || []).map((x) => ({ ...x, saved: x.name }))
   const rows = must(d)
   starter = rows.length === 0
   if (starter) {
@@ -69,6 +77,7 @@ async function loadData() {
       designs: structuredClone(D.designs).map(({ featured, ...x }) => x),
       team: structuredClone(D.team),
       showroom: D.featured.map((x) => x.slug),
+      charts,
     }
   } else {
     const settings = must(s)
@@ -77,6 +86,7 @@ async function loadData() {
       designs: rows,
       team: must(t),
       showroom: settings?.showroom || [],
+      charts,
     }
   }
 }
@@ -87,6 +97,9 @@ async function publish(msg = 'Published — live on the site') {
   const designs = data.designs.map((x, i) => ({
     slug: x.slug, position: i, name: x.name, type: x.type || null, category: x.category || null, tagline: x.tagline || null,
     price: Number.isFinite(x.price) ? x.price : null,
+    mrp: Number.isFinite(x.mrp) && Number.isFinite(x.price) && x.mrp > x.price ? x.mrp : null,
+    tags: (x.tags || []).filter((t) => TAGS[t]), sizes: (x.sizes || []).filter((s) => SIZES.includes(s)), stock: stockOf(x),
+    ...(chartsReady ? { size_chart: data.charts.some((c) => c.name === x.size_chart) ? x.size_chart : null } : {}),
     accent: x.accent || '#ff4a1c', garment: x.garment || null, model: x.model === 'card' ? 'card' : 'tee',
     story: x.story || [], details: x.details || [], images: x.images || [], prints: x.prints || null,
     published: x.published !== false, updated_at: now,
@@ -95,7 +108,15 @@ async function publish(msg = 'Published — live on the site') {
     id: (m.id ||= crypto.randomUUID()), position: i, name: m.name, role: m.role || null, line: m.line || null,
     photo: m.photo || null, instagram: m.instagram || null,
   }))
+  // charts first: designs point at them by name (a rename cascades to the designs in the database)
+  const charts = chartsReady ? data.charts.map((c, i) => ({ id: (c.id ||= crypto.randomUUID()), name: c.name, unit: c.unit || 'in', columns: c.columns, rows: c.rows, note: c.note || null, position: i, updated_at: now })) : []
+  if (charts.length) must(await db.from('size_charts').upsert(charts))
   if (designs.length) must(await db.from('designs').upsert(designs))
+  if (chartsReady) {
+    const keepCharts = charts.map((c) => c.id)
+    must(await (keepCharts.length ? db.from('size_charts').delete().not('id', 'in', `(${keepCharts.join(',')})`) : db.from('size_charts').delete().not('id', 'is', null)))
+    data.charts.forEach((c) => (c.saved = c.name))
+  }
   must(await db.from('settings').upsert({ id: 1, brand: data.brand, showroom: data.showroom.filter(Boolean), updated_at: now }))
   if (team.length) must(await db.from('team').upsert(team))
   // people removed in the Team tab
@@ -163,7 +184,7 @@ function renderNewPassword(error = '') {
 /* ───────── Shell ───────── */
 
 let tab = 'designs'
-const TABS = [['designs', 'Designs'], ['showroom', 'Showroom'], ['contact', 'Contact'], ['team', 'Team']]
+const TABS = [['designs', 'Designs'], ['showroom', 'Showroom'], ['charts', 'Size charts'], ['contact', 'Contact'], ['team', 'Team']]
 
 function renderShell() {
   app.innerHTML = `
@@ -180,7 +201,7 @@ function renderShell() {
     <main class="wrap"></main>`
   $('[data-act="logout"]').addEventListener('click', logout)
   $$('[data-tab]').forEach((b) => b.addEventListener('click', () => { tab = b.dataset.tab; renderShell() }))
-  ;({ designs: renderDesigns, showroom: renderShowroom, contact: renderContact, team: renderTeam })[tab]($('main.wrap'))
+  ;({ designs: renderDesigns, showroom: renderShowroom, charts: renderCharts, contact: renderContact, team: renderTeam })[tab]($('main.wrap'))
 }
 
 /* ───────── Designs ───────── */
@@ -198,7 +219,7 @@ function renderDesigns(main) {
           <div class="thumb" style="--a:${esc(d.accent)}">${d.images?.[0] ? `<img src="${esc(d.images[0])}" alt="" loading="lazy" />` : ''}</div>
           <div>
             <div class="row__name">${esc(d.name)}${data.showroom.includes(d.slug) ? '<span class="badge">Showroom</span>' : ''}</div>
-            <div class="row__meta">${esc(d.type || '')}${d.category ? ` · ${esc(d.category)}` : ''}${d.prints ? ' · print artwork' : ''}</div>
+            <div class="row__meta">${esc(d.type || '')}${d.category ? ` · ${esc(d.category)}` : ''}${priceOf(d) ? ` · ${priceOf(d)}${offOf(d) ? ` (${offOf(d)}% off)` : ''}` : ''}${stockOf(d) !== 'in_stock' ? ` · ${STOCK[stockOf(d)]}` : ''}</div>
           </div>
           <div class="row__btns">
             <button class="b b--sm icon" data-act="up" aria-label="Move up" ${i === 0 ? 'disabled' : ''}>↑</button>
@@ -246,7 +267,7 @@ const TYPES = ['Oversized Tee', 'Boxy Tee', 'Regular Tee', 'Long Sleeve', 'Hoodi
 function openEditor(index) {
   const isNew = index === null
   const d = isNew
-    ? { name: '', slug: '', type: 'Oversized Tee', category: '', tagline: '', accent: '#ff4a1c', model: 'tee', garment: '#f4f4f2', story: [], details: [['Fit', 'Oversized'], ['Print', 'Front & back'], ['Edition', 'Limited run']], images: [] }
+    ? { name: '', slug: '', type: 'Oversized Tee', category: '', tagline: '', accent: '#ff4a1c', model: 'tee', garment: '#f4f4f2', story: [], details: [['Fit', 'Oversized'], ['Print', 'Front & back'], ['Edition', 'Limited run']], images: [], sizes: ['S', 'M', 'L', 'XL', 'XXL'], tags: ['new'], stock: 'in_stock' }
     : structuredClone(data.designs[index])
   // processed images waiting to be uploaded
   const pending = { front: null, back: null, printFront: null, printBack: null }
@@ -292,7 +313,6 @@ function openEditor(index) {
           <label class="f"><span>Link name</span><input name="slug" value="${esc(d.slug)}" ${isNew ? '' : 'readonly'} /><small>${isNew ? 'Filled in from the name. Used in the web address.' : 'Fixed once created, so shared links keep working.'}</small></label>
           <label class="f"><span>Type</span><input name="type" list="types" value="${esc(d.type)}" /></label>
           <label class="f"><span>Category</span><input name="category" list="cats" value="${esc(d.category)}" placeholder="e.g. Originals, Anime, Motorsport" /></label>
-          <label class="f"><span>Price (₹)</span><input name="price" type="number" min="0" step="1" inputmode="numeric" value="${d.price ?? ''}" placeholder="e.g. 1499" /><small>Leave empty to hide the price.</small></label>
         </div>
         <datalist id="types">${TYPES.map((t) => `<option value="${t}">`).join('')}</datalist>
         <datalist id="cats">${cats.map((c) => `<option value="${esc(c)}">`).join('')}</datalist>
@@ -302,7 +322,25 @@ function openEditor(index) {
       </section>
 
       <section class="card">
-        <h3 class="mono">3 · Look</h3>
+        <h3 class="mono">3 · Price & availability</h3>
+        <div class="grid2">
+          <label class="f"><span>Price (₹)</span><input name="price" type="number" min="0" step="1" inputmode="numeric" value="${d.price ?? ''}" placeholder="e.g. 799" /><small>What it sells for. Leave empty to hide the price.</small></label>
+          <label class="f"><span>Original price / MRP (₹)</span><input name="mrp" type="number" min="0" step="1" inputmode="numeric" value="${d.mrp ?? ''}" placeholder="e.g. 1299" /><small>Optional. If it's higher than the price, it shows struck through with the % off.</small></label>
+        </div>
+        <label class="f"><span>Availability</span><select name="stock">${Object.entries(STOCK).map(([k, v]) => `<option value="${k}" ${stockOf(d) === k ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
+        <div class="f"><span>Sizes in stock</span>
+          <div class="seg seg--wrap">${SIZES.map((s) => `<label><input type="checkbox" name="size" value="${s}" ${(d.sizes || []).includes(s) ? 'checked' : ''} />${s}</label>`).join('')}</div>
+          <small>Unticked sizes show as sold out. Tick none to hide sizes (caps, totes…).</small>
+        </div>
+        <label class="f"><span>Size chart</span><select name="size_chart"><option value="">None</option>${data.charts.map((c) => `<option ${c.name === d.size_chart ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select><small>${data.charts.length ? 'Shown as the “Size guide” on the design’s page. Charts are made in the Size charts tab.' : 'No charts yet — make one in the Size charts tab, then pick it here.'}</small></label>
+        <div class="f"><span>Badges</span>
+          <div class="seg seg--wrap">${Object.entries(TAGS).map(([k, v]) => `<label><input type="checkbox" name="tag" value="${k}" ${(d.tags || []).includes(k) ? 'checked' : ''} />${v}</label>`).join('')}</div>
+          <small>Shown on the design's card. Bestsellers can be sorted and filtered on the Collection page.</small>
+        </div>
+      </section>
+
+      <section class="card">
+        <h3 class="mono">4 · Look</h3>
         <div class="grid2">
           <label class="f"><span>Accent colour</span><input type="color" name="accent" value="${esc(d.accent)}" /><small>Used for the glow, buttons and the beam in the showroom.</small></label>
           <label class="f"><span>Fabric colour</span><input type="color" name="garment" value="${esc(d.garment || '#f4f4f2')}" /><small>Picked from the mockup automatically.</small></label>
@@ -427,6 +465,11 @@ function openEditor(index) {
         type: f('type').value.trim(),
         category: f('category').value.trim(),
         price: f('price').value === '' ? null : Math.max(0, Math.round(+f('price').value)),
+        mrp: f('mrp').value === '' ? null : Math.max(0, Math.round(+f('mrp').value)),
+        stock: f('stock').value,
+        sizes: $$('[name="size"]:checked', sheet).map((c) => c.value),
+        tags: $$('[name="tag"]:checked', sheet).map((c) => c.value),
+        size_chart: f('size_chart').value || null,
         tagline: f('tagline').value.trim(),
         story: f('story').value.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean),
         details: f('details').value.split('\n').map((l) => l.split(':')).filter((p) => p.length > 1 && p[0].trim()).map(([k, ...v]) => [k.trim(), v.join(':').trim()]),
@@ -561,6 +604,82 @@ function renderTeam(main) {
         renderTeam(main)
         toast('Photo added — press Save & publish')
       } catch (err) { toast(err.message, true) }
+    })
+  })
+}
+
+/* ───────── Size charts ───────── */
+
+const blankChart = () => ({ name: '', unit: 'in', columns: ['Chest', 'Length', 'Shoulder'], rows: ['S', 'M', 'L', 'XL', 'XXL'].map((s) => [s, '', '', '']), note: '' })
+
+function renderCharts(main) {
+  if (!chartsReady) {
+    main.innerHTML = `<div class="head"><div><h2>Size charts</h2></div></div>
+      <div class="card"><p><b>One database update first.</b> Run <code>supabase/migrations/0005_size_charts.sql</code> in the Supabase SQL editor, then reload this page.</p></div>`
+    return
+  }
+  main.innerHTML = `
+    <div class="head"><div><h2>Size charts</h2><p>Each blank's measurements, saved once by name. Pick a chart on any design (Designs → Price & availability) and it shows as that design's size guide.</p></div>
+      <div class="top__actions"><button class="b" data-act="add">+ New chart</button><button class="b b--primary" data-act="save">Save & publish</button></div></div>
+    <div class="list">${data.charts.map((c, i) => {
+      const used = data.designs.filter((d) => d.size_chart === c.saved).length
+      return `
+      <div class="card chart" data-i="${i}">
+        <div class="grid2">
+          <label class="f"><span>Name</span><input data-k="name" value="${esc(c.name)}" placeholder="e.g. Oversized Tee — Bewakoof blank" /><small>${used ? `Used by ${used} design${used === 1 ? '' : 's'} — renaming updates them.` : 'Not used by any design yet.'}</small></label>
+          <label class="f"><span>Unit</span><select data-k="unit"><option value="in" ${c.unit !== 'cm' ? 'selected' : ''}>Inches</option><option value="cm" ${c.unit === 'cm' ? 'selected' : ''}>Centimetres</option></select></label>
+        </div>
+        <div class="ctable-wrap"><table class="ctable">
+          <thead><tr><th>Size</th>${c.columns.map((h, k) => `<th><input data-col="${k}" value="${esc(h)}" aria-label="Measurement name" /><button class="b b--sm icon" data-act="delcol" data-k="${k}" aria-label="Remove column" ${c.columns.length > 1 ? '' : 'disabled'}>×</button></th>`).join('')}<th><button class="b b--sm" data-act="addcol">+ Column</button></th></tr></thead>
+          <tbody>${c.rows.map((r, j) => `<tr>${[0, ...c.columns.map((_, k) => k + 1)].map((k) => `<td><input data-r="${j}" data-c="${k}" value="${esc(r[k] ?? '')}" ${k ? 'inputmode="decimal"' : ''} /></td>`).join('')}<td><button class="b b--sm icon" data-act="delrow" data-k="${j}" aria-label="Remove row">×</button></td></tr>`).join('')}</tbody>
+        </table></div>
+        <div><button class="b b--sm" data-act="addrow">+ Size</button></div>
+        <label class="f"><span>Note under the chart</span><input data-k="note" value="${esc(c.note)}" placeholder="e.g. Measured flat. Oversized — size down for a regular fit." /></label>
+        <div><button class="b b--sm b--danger" data-act="remove">Delete chart</button></div>
+      </div>`
+    }).join('') || '<div class="card"><p class="muted">No size charts yet. Make one per blank you print on.</p></div>'}</div>`
+
+  // read every input back into data.charts
+  const sync = () => $$('.chart', main).forEach((el) => {
+    const c = data.charts[+el.dataset.i]
+    $$('[data-k]', el).forEach((inp) => (c[inp.dataset.k] = inp.value.trim()))
+    c.columns = $$('[data-col]', el).map((inp) => inp.value.trim())
+    c.rows = c.rows.map((r, j) => [0, ...c.columns.map((_, k) => k + 1)].map((k) => ($(`[data-r="${j}"][data-c="${k}"]`, el)?.value || '').trim()))
+  })
+  $('[data-act="add"]', main).addEventListener('click', () => { sync(); data.charts.push(blankChart()); renderCharts(main) })
+  $('[data-act="save"]', main).addEventListener('click', async (e) => {
+    sync()
+    const names = data.charts.map((c) => c.name)
+    if (names.some((n) => !n)) return toast('Every chart needs a name', true)
+    if (new Set(names.map((n) => n.toLowerCase())).size !== names.length) return toast('Two charts have the same name', true)
+    // renamed charts: carry their designs along
+    data.charts.forEach((c) => { if (c.saved && c.saved !== c.name) data.designs.forEach((d) => d.size_chart === c.saved && (d.size_chart = c.name)) })
+    data.charts.forEach((c) => (c.rows = c.rows.filter((r) => r[0])))
+    e.currentTarget.disabled = true
+    try { await publish('Size charts saved'); renderCharts(main) } catch (err) { toast(err.message, true); e.currentTarget.disabled = false }
+  })
+  $$('.chart', main).forEach((el) => {
+    const i = +el.dataset.i
+    el.addEventListener('click', async (e) => {
+      const btn = e.target.closest('[data-act]')
+      if (!btn) return
+      sync()
+      const c = data.charts[i]
+      const k = +btn.dataset.k
+      switch (btn.dataset.act) {
+        case 'addrow': c.rows.push(['', ...c.columns.map(() => '')]); break
+        case 'delrow': c.rows.splice(k, 1); break
+        case 'addcol': c.columns.push(''); c.rows.forEach((r) => r.push('')); break
+        case 'delcol': c.columns.splice(k, 1); c.rows.forEach((r) => r.splice(k + 1, 1)); break
+        case 'remove': {
+          const used = data.designs.filter((d) => d.size_chart === c.saved)
+          if (!confirm(`Delete “${c.name || 'this chart'}”?${used.length ? ` ${used.length} design${used.length === 1 ? '' : 's'} will lose their size guide.` : ''}`)) return
+          used.forEach((d) => (d.size_chart = null))
+          data.charts.splice(i, 1)
+          break
+        }
+      }
+      renderCharts(main)
     })
   })
 }
