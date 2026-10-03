@@ -8,6 +8,7 @@ import Lenis from 'lenis'
 import { brand, designs, sizeCharts } from './content.js'
 import { imagesFor, frontBack, galleryFor } from './mockup.js'
 import { heartHTML, paintHearts, wireBuy, setScrollLock } from './shop-ui.js'
+import { track } from './analytics.js'
 import { SIZES, TAGS, STOCK, chartFor, priceHTML, priceNum, stockOf, buyable, tagsOf, sizesOf, badgeHTML } from './commerce.js'
 
 gsap.registerPlugin(ScrollTrigger, SplitText)
@@ -317,11 +318,27 @@ function revealDetail() {
 }
 
 let busy = false
+// how long each story stays open → "avg time on a design" in Insights
+let viewStart = 0
+function endView(beacon) {
+  if (!current || !viewStart) return
+  const seconds = Math.min(1800, Math.round((performance.now() - viewStart) / 1000))
+  track('design_closed', { slug: current.slug, seconds }, beacon ? { transport: 'sendBeacon' } : undefined)
+  viewStart = 0
+}
+addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') endView(true)
+  else if (current && !viewStart) viewStart = performance.now() // came back to the tab: start a fresh stint
+})
+
 async function openDesign(d) {
   if (busy) return
   busy = true
   const first = !current
+  endView()
   current = d
+  viewStart = performance.now()
+  track('design_viewed', { slug: d.slug, name: d.name, price: priceNum(d) })
   detail.style.setProperty('--d-accent', d.accent)
   closeMenu()
   if (first) {
@@ -358,6 +375,7 @@ async function closeDesign() {
   detail.setAttribute('aria-hidden', 'true')
   document.body.classList.remove('is-locked')
   lenis?.start()
+  endView()
   current = null
   busy = false
 }
@@ -433,5 +451,23 @@ export function riseLines(selector, opts = {}) {
     })
   })
 }
+
+/* ───────── Headings that fit ───────── */
+
+// Big display headings are sized in vw; a single long word (CANCELLATIONS, RETREAT…)
+// can still be wider than a phone. Shrink just those headings until the word fits.
+const FIT = '.sub__title, .archive__title, .team__head h2, .archive__cta .display, .co__done .display, .co__empty .display, .acct__empty .display, .archive__empty .display, .card__name, .drop__end-title'
+export function fitHeadings(root = document) {
+  for (const el of root.querySelectorAll(FIT)) {
+    el.style.fontSize = ''
+    for (let i = 0; i < 3 && el.clientWidth && el.scrollWidth > el.clientWidth + 1; i++) {
+      el.style.fontSize = `${(parseFloat(getComputedStyle(el).fontSize) * el.clientWidth) / el.scrollWidth * 0.98}px`
+    }
+  }
+}
+fitHeadings()
+document.fonts?.ready.then(() => fitHeadings())
+let fitTimer
+addEventListener('resize', () => { clearTimeout(fitTimer); fitTimer = setTimeout(() => fitHeadings(), 150) })
 
 export { gsap, ScrollTrigger, SplitText }

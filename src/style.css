@@ -203,7 +203,7 @@ body.menu-open .nav__logo img { filter: invert(1); }
 /* ───────── Drop ───────── */
 .drop { position: relative; padding: 72px 0 40px; }
 .drop__head { padding: 0 var(--gutter); display: grid; gap: 18px; margin-bottom: 40px; }
-.drop__title { font-size: clamp(52px, 17vw, 260px); display: flex; align-items: baseline; gap: 0.1em; white-space: nowrap; }
+.drop__title { font-size: clamp(48px, 15vw, 260px); display: flex; align-items: baseline; gap: 0.1em; white-space: nowrap; }
 .drop__title .line-mask { padding: 0.22em 0.12em 0.3em 0; margin: -0.22em -0.12em -0.3em 0; }
 .drop__title .serif { display: inline-block; }
 /* "01" tucks into the P: pulled left over it and dropped below the baseline */
@@ -226,7 +226,7 @@ body.menu-open .nav__logo img { filter: invert(1); }
 .card__num { font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.1em; padding: 6px 9px; border-radius: 99px; background: var(--card-accent); color: var(--ink); }
 .card__type { font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; padding: 6px 9px; border-radius: 99px; background: rgba(0, 0, 0, 0.45); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
 .card__info { position: absolute; left: 16px; right: 16px; bottom: 16px; z-index: 2; }
-.card__name { font-size: clamp(44px, 13.5vw, 72px); display: block; }
+.card__name { font-size: clamp(38px, 11vw, 72px); display: block; }
 .card__tag { font-family: var(--f-serif); font-style: italic; font-size: 20px; line-height: 1.15; margin-top: 10px; max-width: 24ch; }
 .card__cta { display: inline-flex; align-items: center; gap: 10px; margin-top: 14px; font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; }
 .card__cta i { width: 28px; height: 28px; border-radius: 50%; background: var(--card-accent); color: var(--ink); display: grid; place-items: center; font-style: normal; transition: transform 0.5s var(--ease-out); }
@@ -257,7 +257,7 @@ body.menu-open .nav__logo img { filter: invert(1); }
 .pillar { position: relative; padding: 26px 0 30px; display: grid; grid-template-columns: 44px 1fr; gap: 6px 12px; }
 .pillar::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 1px; background: var(--line); transform-origin: left; transform: scaleX(var(--draw, 0)); }
 .pillar__n { font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.1em; color: var(--accent); padding-top: 8px; }
-.pillar__t { font-weight: 900; font-stretch: 125%; text-transform: uppercase; font-size: clamp(32px, 9vw, 64px); line-height: 0.9; letter-spacing: -0.02em; transition: color 0.4s, transform 0.6s var(--ease-out); }
+.pillar__t { font-weight: 900; font-stretch: 125%; text-transform: uppercase; font-size: clamp(30px, 8.6vw, 64px); line-height: 0.9; letter-spacing: -0.02em; transition: color 0.4s, transform 0.6s var(--ease-out); }
 .pillar__b { grid-column: 2; color: var(--mute); max-width: 44ch; font-size: 15px; margin-top: 8px; }
 @media (min-width: 900px) {
   .different { padding: 200px var(--gutter) 160px; }
@@ -273,7 +273,7 @@ body.menu-open .nav__logo img { filter: invert(1); }
 /* ───────── Team ───────── */
 .team { padding: 80px 0 100px; }
 .team__head { padding: 0 var(--gutter); display: grid; gap: 22px; margin-bottom: 40px; }
-.team__head h2 { font-size: clamp(48px, 13vw, 160px); }
+.team__head h2 { font-size: clamp(40px, 12vw, 160px); }
 .team__head .serif { color: var(--accent); }
 .team__grid {
   display: grid; grid-auto-flow: column; grid-auto-columns: 74%; gap: 12px;
@@ -392,7 +392,7 @@ body.menu-open .nav__logo img { filter: invert(1); }
 
 .d-info { padding: 32px var(--gutter) 40px; }
 .d-meta { display: flex; justify-content: space-between; color: var(--mute); margin-bottom: 18px; }
-.d-name { font-size: clamp(58px, 17vw, 150px); color: var(--bone); }
+.d-name { font-size: clamp(48px, 14vw, 150px); color: var(--bone); }
 .d-name .line-mask:last-child { color: var(--d-accent); }
 .d-tag { font-family: var(--f-serif); font-style: italic; font-size: clamp(26px, 7vw, 40px); line-height: 1.08; margin: 22px 0 36px; max-width: 20ch; }
 .d-story { display: grid; gap: 18px; font-size: 17px; line-height: 1.6; color: #c9c5bc; max-width: 58ch; }

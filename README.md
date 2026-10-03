@@ -73,6 +73,21 @@ To add another admin later: create the user (step 2) and run 0002 with their ema
 5. **Test:** add something to the bag → Checkout → pay with Razorpay's test details (UPI `success@razorpay`, or a test card from Razorpay's docs). The order shows in Admin → Orders as “To ship”.
 6. **Going live:** finish Razorpay KYC, generate *Live* keys, swap the two key variables (and make a live-mode webhook with the same URL), redeploy.
 
+## Analytics — Admin → Insights
+One dashboard, two sources:
+- **From the database** (works as soon as `supabase/migrations/0007_insights.sql` is run): revenue, orders, average order, unfinished checkouts, new accounts, most ordered designs, sizes sold, most wishlisted, what's sitting in bags.
+- **From PostHog** (free up to 1M events/month): visitors, average time on site, most viewed designs, average time spent on each design, add-to-bag rate per design (guests included), top pages, where visitors come from, devices. PostHog's own dashboard has much more (funnels, session recordings, heatmaps).
+
+The site sends these events (`src/analytics.js`): page views/leaves (automatic), `design_viewed`, `design_closed` (with seconds), `add_to_bag`, `remove_from_bag`, `wishlist_add/remove`, `checkout_started`, `order_paid`. PostHog loads after the page is idle, so it doesn't slow anything down.
+
+### PostHog setup (one time)
+1. Sign up at posthog.com (pick **US** or **EU** cloud) and create a project for the site.
+2. **Project settings → Project API key** (`phc_…`, public by design) → paste into `src/analytics.config.js` as `POSTHOG_KEY`; set `POSTHOG_HOST` to `https://us.i.posthog.com` or `https://eu.i.posthog.com`. Commit + deploy — events start flowing.
+3. For the admin dashboard to read numbers back: PostHog → **Personal API keys** (your avatar → Settings) → Create key with scope **Query: Read** for this project. Put in Netlify env vars:
+   - `POSTHOG_PERSONAL_API_KEY` — that key (secret — Netlify only)
+   - `POSTHOG_PROJECT_ID` — the number in your PostHog URL (`/project/12345/…`)
+   Then redeploy.
+
 ## Adding a new design without the admin
 The admin is the normal way. The scripts below do the same processing offline and write the files into the repo (then add the design to `src/content.defaults.js`):
 1. Drop the raw image(s) into `/design`, register them in `scripts/process-designs.py`, run `python scripts/process-designs.py` (needs `pip install pillow numpy scipy`).

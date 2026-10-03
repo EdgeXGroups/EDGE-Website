@@ -6,6 +6,7 @@ import { priceHTML, money, shippingRules, sizesOf, lineProblem, MAX_QTY } from '
 import { onBag, summary, setQty, remove, add, count } from './cart.js'
 import { onUser, onWishlist, wishlist, toggleWish, signIn, user } from './account.js'
 import { imagesFor } from './mockup.js'
+import { track } from './analytics.js'
 
 const $ = (s, r = document) => r.querySelector(s)
 const $$ = (s, r = document) => [...r.querySelectorAll(s)]
@@ -156,7 +157,7 @@ bag.addEventListener('click', (e) => {
   const { slug, size } = li.dataset
   const q = e.target.closest('[data-q]')
   if (q) { const cur = summary().lines.find((l) => l.slug === slug && l.size === size); setQty(slug, size, cur.qty + +q.dataset.q) }
-  if (e.target.closest('[data-rm]')) remove(slug, size)
+  if (e.target.closest('[data-rm]')) { remove(slug, size); track('remove_from_bag', { slug, size }) }
   if (e.target.closest('a')) hide(bag)
 })
 $('.bag__checkout', bag).addEventListener('click', (e) => { if (e.currentTarget.classList.contains('is-disabled')) e.preventDefault() })
@@ -189,6 +190,7 @@ document.addEventListener('click', async (e) => {
   e.stopPropagation()
   const ok = await toggleWish(b.dataset.wish)
   if (!ok) return openSignIn('Sign in to save designs to your wishlist.')
+  track(wishlist.has(b.dataset.wish) ? 'wishlist_add' : 'wishlist_remove', { slug: b.dataset.wish })
   b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop')
 }, true)
 
@@ -209,6 +211,7 @@ export function wireBuy(root, d) {
     }
     if (lineProblem(d, size)) return
     add(d.slug, size, 1)
+    track('add_to_bag', { slug: d.slug, size, price: d.price })
     label.textContent = 'Added ✓'
     btn.classList.add('is-added')
     setTimeout(() => { label.textContent = 'Add to bag'; btn.classList.remove('is-added') }, 1600)

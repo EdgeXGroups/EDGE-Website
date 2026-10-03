@@ -344,7 +344,6 @@ function initSpotlight() {
   ScrollTrigger.create({
     trigger: sec, start: 'top top', end: () => '+=' + innerHeight * (reduced ? 1 : 4),
     pin: true, scrub: reduced ? true : 0.8, animation: tl, anticipatePin: 1, invalidateOnRefresh: true,
-    onUpdate: (s) => ($('.spot__progress i').style.transform = `scaleX(${s.progress})`),
   })
   // pieces breathe gently once on stage
   if (!reduced) $$('.spot__bob').forEach((b, i) => gsap.to(b, { y: -10, duration: 2.6, delay: i * 0.4, ease: 'sine.inOut', yoyo: true, repeat: -1 }))

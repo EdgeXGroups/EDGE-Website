@@ -5,7 +5,7 @@
 import './style.css'
 import './pages.css'
 import { brand } from './content.js'
-import { $, esc, fillBrand, lenis, initCursor, pageEnter, gsap } from './shared.js'
+import { $, esc, fillBrand, lenis, initCursor, pageEnter, gsap, fitHeadings } from './shared.js'
 import { shippingRules, money } from './commerce.js'
 
 const UPDATED = '4 October 2026'
@@ -27,6 +27,7 @@ const PAGES = {
         <li><b>When you place an order:</b> your name, email, mobile number, delivery address and what you bought.</li>
         <li><b>Your wishlist, bag and saved addresses</b>, if you're signed in, so they're there on every device.</li>
         <li><b>In your browser only:</b> your bag (for guests), your last-used checkout details and a few display preferences, kept in local storage on your device.</li>
+        <li><b>How the site is used:</b> pages and designs viewed, time spent, what's added to the bag, and your device type and the site that sent you — collected with PostHog analytics so we can see what people like and make the site better. Anonymous visitors aren't identified; if you're signed in, it's linked to your account. Your browser's “Do Not Track” setting is respected.</li>
       </ul>
       <h2>Payments</h2>
       <p>Payments are handled by <b>Razorpay</b>. Your card, UPI and bank details go straight to Razorpay and never reach our servers. We only receive confirmation that a payment succeeded and its reference number. See Razorpay's privacy policy for how they handle your payment data.</p>
@@ -37,9 +38,9 @@ const PAGES = {
         <li>To handle returns, refunds and questions you send us.</li>
         <li>To meet legal, tax and accounting requirements.</li>
       </ul>
-      <p>We don't send marketing messages unless you ask us to, and we don't use advertising trackers.</p>
+      <p>We don't send marketing messages unless you ask us to, and we don't use advertising trackers or sell data to advertisers.</p>
       <h2>Who else processes it</h2>
-      <p>Only the services that run the shop for us: <b>Supabase</b> (our database and sign-in), <b>Netlify</b> (website hosting), <b>Razorpay</b> (payments), <b>Google</b> (sign-in) and the courier delivering your order, who receives your name, phone and address.</p>
+      <p>Only the services that run the shop for us: <b>Supabase</b> (our database and sign-in), <b>Netlify</b> (website hosting), <b>Razorpay</b> (payments), <b>Google</b> (sign-in), <b>PostHog</b> (site analytics) and the courier delivering your order, who receives your name, phone and address.</p>
       <h2>How long we keep it</h2>
       <p>Order records are kept for as long as tax and accounting law requires (generally up to 8 years). Your account, wishlist and saved addresses are kept until you ask us to delete them.</p>
       <h2>Your rights</h2>
@@ -117,6 +118,7 @@ const page = document.body.dataset.page
 const p = PAGES[page]
 $('[data-legal-title]').innerHTML = p.title
 $('[data-legal-body]').innerHTML = `<p class="mono legal__date">Last updated ${UPDATED}</p>${p.body}`
+fitHeadings()
 
 fillBrand()
 initCursor()

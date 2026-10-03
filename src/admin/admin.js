@@ -184,7 +184,7 @@ function renderNewPassword(error = '') {
 /* ───────── Shell ───────── */
 
 let tab = 'orders'
-const TABS = [['orders', 'Orders'], ['designs', 'Designs'], ['showroom', 'Showroom'], ['charts', 'Size charts'], ['contact', 'Contact & shop'], ['team', 'Team']]
+const TABS = [['orders', 'Orders'], ['insights', 'Insights'], ['designs', 'Designs'], ['showroom', 'Showroom'], ['charts', 'Size charts'], ['contact', 'Contact & shop'], ['team', 'Team']]
 
 function renderShell() {
   app.innerHTML = `
@@ -201,7 +201,7 @@ function renderShell() {
     <main class="wrap"></main>`
   $('[data-act="logout"]').addEventListener('click', logout)
   $$('[data-tab]').forEach((b) => b.addEventListener('click', () => { tab = b.dataset.tab; renderShell() }))
-  ;({ orders: renderOrders, designs: renderDesigns, showroom: renderShowroom, charts: renderCharts, contact: renderContact, team: renderTeam })[tab]($('main.wrap'))
+  ;({ orders: renderOrders, insights: renderInsights, designs: renderDesigns, showroom: renderShowroom, charts: renderCharts, contact: renderContact, team: renderTeam })[tab]($('main.wrap'))
 }
 
 /* ───────── Designs ───────── */
@@ -678,6 +678,101 @@ async function renderOrders(main) {
     toast('Order updated')
     renderOrders(main)
   })
+}
+
+/* ───────── Insights ───────── */
+
+let insightDays = 30
+const fmtDur = (s) => (s == null ? '—' : s < 60 ? `${Math.round(s)}s` : `${Math.floor(s / 60)}m ${String(Math.round(s % 60)).padStart(2, '0')}s`)
+const fmtNum = (n) => Number(n || 0).toLocaleString('en-IN')
+const pct = (x) => `${Math.round((x || 0) * 100)}%`
+
+async function visitorNumbers(days) {
+  const { data: { session } } = await db.auth.getSession()
+  const res = await fetch('/api/insights', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', authorization: `Bearer ${session?.access_token || ''}` },
+    body: JSON.stringify({ days }),
+  }).catch(() => null)
+  if (!res || res.status === 404) return { error: 'Visitor numbers load on the live site only (they come from a Netlify function).' }
+  const body = await res.json().catch(() => ({}))
+  return res.ok ? body : { error: body.error || `Couldn't load visitor numbers (${res.status}).` }
+}
+
+async function renderInsights(main) {
+  main.innerHTML = `<div class="head"><div><h2>Insights</h2><p>Sales from your orders, saves and bags from customers' accounts, and visitor behaviour from PostHog.</p></div>
+      <div class="seg" role="radiogroup" aria-label="Period">${[[7, '7 days'], [30, '30 days'], [90, '90 days']].map(([d, l]) => `<label><input type="radio" name="days" value="${d}" ${d === insightDays ? 'checked' : ''} />${l}</label>`).join('')}</div></div>
+    <div data-ins><p class="muted">Loading…</p></div>`
+  $$('[name="days"]', main).forEach((r) => r.addEventListener('change', () => { insightDays = +r.value; renderInsights(main) }))
+
+  const [shopRes, web] = await Promise.all([db.rpc('admin_insights', { days: insightDays }), visitorNumbers(insightDays)])
+  const box = $('[data-ins]', main)
+  const shop = shopRes.data
+  const design = (slug) => data.designs.find((d) => d.slug === slug)
+  const thumb = (slug) => { const d = design(slug); return `<span class="ins__thumb" style="--a:${esc(d?.accent || '#333')}">${d?.images?.[0] ? `<img src="${esc(d.images[0])}" alt="" />` : ''}</span>` }
+
+  const tile = (label, value, sub = '') => `<div class="ins__tile"><span class="mono muted">${label}</span><b>${value}</b>${sub ? `<small class="muted">${sub}</small>` : ''}</div>`
+  // a ranked list: one hue, bar length = value, the number always written out
+  const bars = (title, note, rows, { designs = true } = {}) => {
+    if (!rows?.length) return `<section class="card ins__list"><h3>${title}</h3><p class="muted ins__note">${note}</p><p class="muted">Nothing yet.</p></section>`
+    const max = Math.max(...rows.map((r) => r.value), 1)
+    return `<section class="card ins__list"><h3>${title}</h3><p class="muted ins__note">${note}</p><ol>${rows.map((r) => `
+      <li title="${esc(r.label)} — ${esc(r.text)}">
+        ${designs ? thumb(r.key) : ''}
+        <span class="ins__name">${esc(r.label)}</span>
+        <span class="ins__val">${esc(r.text)}</span>
+        <span class="ins__bar"><i style="width:${Math.max(2, (r.value / max) * 100)}%"></i></span>
+      </li>`).join('')}</ol></section>`
+  }
+  const name = (slug) => design(slug)?.name || slug
+
+  let html = ''
+  // ── sales
+  if (shopRes.error) {
+    html += `<div class="card"><p>${/admin_insights/.test(shopRes.error.message) ? 'Sales numbers need one database update — run <code>supabase/migrations/0007_insights.sql</code>.' : esc(explain(shopRes.error))}</p></div>`
+  } else {
+    const p = shop.period
+    html += `<div class="ins__tiles">
+      ${tile('Revenue', money(p.revenue), `${money(shop.all_time.revenue)} all time`)}
+      ${tile('Orders', fmtNum(p.orders), `${fmtNum(shop.all_time.orders)} all time`)}
+      ${tile('Avg order', p.orders ? money(Math.round(p.revenue / p.orders)) : '—', `${fmtNum(p.items)} pieces sold`)}
+      ${tile('Unfinished checkouts', fmtNum(p.abandoned), 'started but not paid')}
+      ${tile('New accounts', fmtNum(p.customers), `${fmtNum(shop.all_time.customers)} total`)}
+    </div>`
+  }
+  // ── visitors
+  if (web.configured) {
+    html += `<div class="ins__tiles">
+      ${tile('Visitors', fmtNum(web.visitors), `${fmtNum(web.pageviews)} page views`)}
+      ${tile('Avg time on site', fmtDur(web.avgSession), `median ${fmtDur(web.medianSession)} · ${fmtNum(web.sessions)} visits`)}
+      ${tile('Designs opened', fmtNum(web.designs.reduce((n, d) => n + d.views, 0)), `${web.designs.length} different designs`)}
+      ${tile('Visit → order', web.visitors && shop ? pct(shop.period.orders / web.visitors) : '—', 'of visitors bought something')}
+    </div>`
+  } else {
+    html += `<div class="card ins__setup"><p><b>Visitor numbers aren't connected yet.</b> ${esc(web.error || '')}</p>
+      ${web.error ? '' : '<p class="muted">Add your PostHog keys (see README → Analytics) to see visitors, time on site, most viewed designs and time spent on each.</p>'}</div>`
+  }
+
+  html += '<div class="ins__grid">'
+  if (shop) {
+    html += bars('Most ordered', `Pieces sold, last ${insightDays} days`, shop.most_ordered.map((r) => ({ key: r.slug, label: name(r.slug), value: r.qty, text: `${fmtNum(r.qty)} sold · ${money(r.revenue)}` })))
+  }
+  if (web.configured) {
+    html += bars('Most viewed designs', 'Story opened · avg time spent · share who then added it to the bag', web.designs.map((r) => ({ key: r.slug, label: name(r.slug), value: r.views, text: `${fmtNum(r.views)} views · ${fmtDur(r.avgSeconds)} · ${pct(r.bagRate)} to bag` })))
+    html += bars('Most added to bag', 'Everyone, guests included', web.bagAdds.map((r) => ({ key: r.slug, label: name(r.slug), value: r.people, text: `${fmtNum(r.people)} people` })))
+  }
+  if (shop) {
+    html += bars('Most wishlisted', 'Signed-in customers, right now', shop.most_wishlisted.map((r) => ({ key: r.slug, label: name(r.slug), value: r.people, text: `${fmtNum(r.people)} saved` })))
+    html += bars('Sitting in bags', 'Signed-in customers who haven’t checked out yet', shop.most_in_bags.map((r) => ({ key: r.slug, label: name(r.slug), value: r.qty, text: `${fmtNum(r.qty)} in ${fmtNum(r.people)} bag${r.people === 1 ? '' : 's'}` })))
+    html += bars('Sizes sold', `Last ${insightDays} days`, shop.sizes.map((r) => ({ key: r.size, label: r.size, value: r.qty, text: fmtNum(r.qty) })), { designs: false })
+  }
+  if (web.configured) {
+    html += bars('Top pages', 'Page views', web.pages.map((r) => ({ key: r.path, label: r.path, value: r.views, text: fmtNum(r.views) })), { designs: false })
+    html += bars('Where visitors come from', 'Visitors', web.sources.map((r) => ({ key: r.source, label: r.source, value: r.visitors, text: fmtNum(r.visitors) })), { designs: false })
+    html += bars('Devices', 'Visitors', web.devices.map((r) => ({ key: r.device, label: r.device, value: r.visitors, text: fmtNum(r.visitors) })), { designs: false })
+  }
+  html += '</div>'
+  box.innerHTML = html
 }
 
 /* ───────── Size charts ───────── */

@@ -138,3 +138,24 @@ main.wrap { max-width: 980px; margin: 0 auto; padding: 22px 16px 120px; display:
 .ord__items { list-style: none; display: grid; gap: 4px; }
 .ord p { line-height: 1.5; margin-bottom: 6px; }
 @media (max-width: 640px) { .ord__sum { grid-template-columns: 1fr auto; } .ord__sum .muted { grid-column: 1 / -1; grid-row: 2; } }
+
+/* insights */
+.ins__tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.ins__tile { background: var(--ink-2); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; display: grid; gap: 4px; align-content: start; }
+.ins__tile .mono { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; }
+.ins__tile b { font-size: 28px; font-weight: 900; font-stretch: 112%; line-height: 1.05; }
+.ins__tile small { font-size: 12px; }
+.ins__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 10px; align-items: start; }
+.ins__list { gap: 10px; }
+.ins__list h3 { font-size: 15px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.02em; }
+.ins__note { font-size: 12px; margin-top: -6px; }
+.ins__list ol { list-style: none; display: grid; gap: 12px; }
+.ins__list li { display: grid; grid-template-columns: auto 1fr auto; grid-template-areas: "thumb name val" "thumb bar bar"; gap: 5px 10px; align-items: center; }
+.ins__list li:not(:has(.ins__thumb)) { grid-template-columns: 1fr auto; grid-template-areas: "name val" "bar bar"; }
+.ins__thumb { grid-area: thumb; width: 32px; height: 40px; border-radius: 5px; overflow: hidden; background: color-mix(in srgb, var(--a) 35%, #161616); }
+.ins__thumb img { width: 100%; height: 100%; object-fit: contain; }
+.ins__name { grid-area: name; font-size: 14px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ins__val { grid-area: val; font-size: 12px; color: var(--bone); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ins__bar { grid-area: bar; height: 6px; border-radius: 4px; background: rgba(255, 255, 255, 0.06); overflow: hidden; }
+.ins__bar i { display: block; height: 100%; border-radius: 4px; background: var(--accent); }
+.ins__setup p + p { margin-top: 6px; }

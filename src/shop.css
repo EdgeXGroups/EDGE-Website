@@ -167,7 +167,7 @@ html.sheet-open { overflow: hidden; }
 .co__note { color: var(--mute); font-size: 9px; }
 .co__done, .co__empty { display: grid; gap: 20px; justify-items: start; padding: 0 var(--gutter) 120px; }
 .co__done[hidden], .co__empty[hidden], .co[hidden] { display: none; }
-.co__done .display, .co__empty .display { font-size: clamp(48px, 13vw, 140px); }
+.co__done .display, .co__empty .display { font-size: clamp(40px, 12vw, 140px); }
 .co__done .serif, .co__empty .serif { color: var(--accent); }
 .co__tick { width: 72px; height: 72px; border-radius: 50%; background: var(--accent); color: var(--ink); display: grid; place-items: center; font-size: 32px; }
 .co__done .eyebrow span { color: var(--bone); }
@@ -199,7 +199,7 @@ html.sheet-open { overflow: hidden; }
 .acct__panel[hidden] { display: none; }
 .acct__muted { color: var(--mute); }
 .acct__empty { display: grid; gap: 16px; justify-items: start; padding: 20px 0; }
-.acct__empty .display { font-size: clamp(40px, 11vw, 90px); }
+.acct__empty .display { font-size: clamp(36px, 11vw, 90px); }
 .acct__empty .serif { color: var(--accent); }
 .order { border: 1px solid var(--line); border-radius: 14px; margin-bottom: 10px; background: var(--ink-2); }
 .order summary { display: grid; grid-template-columns: auto 1fr auto; grid-template-areas: "thumbs main total" "thumbs status total"; gap: 4px 14px; align-items: center; padding: 14px; cursor: pointer; list-style: none; }

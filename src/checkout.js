@@ -6,6 +6,7 @@ import { user, onUser, ready, accessToken, supabase } from './account.js'
 import { money, priceHTML } from './commerce.js'
 import { openSignIn, openBag } from './shop-ui.js'
 import { imagesFor } from './mockup.js'
+import { track } from './analytics.js'
 
 const STATES = ['Andaman and Nicobar Islands', 'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chandigarh', 'Chhattisgarh', 'Dadra and Nagar Haveli and Daman and Diu', 'Delhi', 'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jammu and Kashmir', 'Jharkhand', 'Karnataka', 'Kerala', 'Ladakh', 'Lakshadweep', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Puducherry', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal']
 const REMEMBER = 'edge-checkout' // this browser's last contact + address, to save retyping
@@ -135,6 +136,7 @@ form.addEventListener('submit', async (e) => {
   try { localStorage.setItem(REMEMBER, JSON.stringify({ ...contact, ...address })) } catch {}
 
   paying = true
+  track('checkout_started', { total: s.total, items: s.ok.reduce((n, l) => n + l.qty, 0) })
   setBusy(true, 'Preparing payment…')
   let order
   try {
@@ -190,6 +192,7 @@ form.addEventListener('submit', async (e) => {
 })
 
 function success(number, phone) {
+  track('order_paid', { number, total: summary().total })
   clear()
   paying = false
   co.hidden = true

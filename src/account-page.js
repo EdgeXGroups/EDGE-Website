@@ -1,7 +1,7 @@
 import './style.css'
 import './pages.css'
 import { designs } from './content.js'
-import { $, $$, esc, fillBrand, lenis, initCursor, pageEnter, startRouter, gsap } from './shared.js'
+import { $, $$, esc, fillBrand, lenis, initCursor, pageEnter, startRouter, gsap, fitHeadings } from './shared.js'
 import { onUser, onWishlist, wishlist, ready, signIn, signOut, supabase, firstName, user } from './account.js'
 import { money, priceHTML, badgeHTML } from './commerce.js'
 import { heartHTML, paintHearts } from './shop-ui.js'
@@ -105,6 +105,7 @@ function apply(u) {
   inn.hidden = !u
   $('[data-title]').innerHTML = u ? `Hi, <em class="serif">${esc(firstName(u))}.</em>` : 'Your <em class="serif">account.</em>'
   $('[data-hello]').textContent = u ? u.email : 'Your account'
+  fitHeadings()
   if (u) { renderOrders(); renderAddresses(); renderWishlist() }
 }
 onUser((u) => settled && apply(u))
