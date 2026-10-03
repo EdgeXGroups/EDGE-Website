@@ -193,5 +193,11 @@ export function portrait(img) {
   return toCanvas(img, s)
 }
 
+/** Extra photos for a design: used as they are, longest side at most 1800px. */
+export function photo(img) {
+  const w = img.naturalWidth || img.width, h = img.naturalHeight || img.height
+  return toCanvas(img, Math.min(1, 1800 / Math.max(w, h)))
+}
+
 export const toWebp = (c, quality = 0.88) =>
   new Promise((resolve) => c.toBlob((b) => resolve(b), 'image/webp', quality))

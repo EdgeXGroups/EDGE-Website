@@ -134,8 +134,21 @@ export function mockup(design, view = 'front') {
 }
 
 export function imagesFor(design) {
-  if (design.images && design.images.length) return design.images
+  const own = (design.images || []).filter(Boolean)
+  if (own.length) return own
   return ['front', 'back', 'detail', 'flat'].map((v) => mockup(design, v))
+}
+
+// images = [front, back, ...more photos]; the back slot may be empty ('')
+export function frontBack(design) {
+  if (design.images?.length) return [design.images[0], design.images[1] || null]
+  return imagesFor(design)
+}
+
+// every photo for the story slides, labelled
+export function galleryFor(design) {
+  if (!design.images?.length) return imagesFor(design).map((src, k) => ({ src, label: ['Front', 'Back', 'Detail', 'Flat'][k] }))
+  return design.images.map((src, k) => ({ src, label: k === 0 ? 'Front' : k === 1 ? 'Back' : '' })).filter((x) => x.src)
 }
 
 export function shade(hex, amt) {

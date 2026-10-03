@@ -6,7 +6,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { SplitText } from 'gsap/SplitText'
 import Lenis from 'lenis'
 import { brand, designs } from './content.js'
-import { imagesFor } from './mockup.js'
+import { imagesFor, frontBack, galleryFor } from './mockup.js'
 
 gsap.registerPlugin(ScrollTrigger, SplitText)
 
@@ -40,8 +40,12 @@ export function fillBrand() {
 /* ───────── Cards ───────── */
 
 // Front image, plus the back revealed on hover (or on scroll for touch).
+// ₹1,499 — or '' when the design has no price yet
+const inr = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })
+export const priceOf = (d) => (d.price == null || d.price === '' || isNaN(d.price) ? '' : inr.format(d.price))
+
 export function mediaHTML(d, { eager = false } = {}) {
-  const [front, back] = imagesFor(d)
+  const [front, back] = frontBack(d)
   return `
     <div class="media" style="--m-accent:${d.accent}">
       <img class="media__img" src="${front}" alt="${esc(d.name)} — front" ${eager ? '' : 'loading="lazy"'} />
@@ -190,23 +194,24 @@ addEventListener('pointerdown', (e) => (pointer = { x: e.clientX, y: e.clientY }
 function detailHTML(d) {
   const i = designs.indexOf(d)
   const next = designs[(i + 1) % designs.length]
-  const imgs = imagesFor(d)
+  const imgs = galleryFor(d)
   const words = d.name.split(' ')
-  const views = ['Front', 'Back', 'Detail', 'Flat']
+  const price = priceOf(d)
   return `
     <div class="d-layout">
       <div class="d-gallery" style="--m-accent:${d.accent}">
         <div class="d-strip">
-          ${imgs.map((src, k) => `<figure data-cursor="Zoom"><img src="${src}" alt="${esc(d.name)} — ${views[k] || 'photo ' + (k + 1)}" ${k > 1 ? 'loading="lazy"' : ''}/><figcaption class="mono">${views[k] || ''}</figcaption></figure>`).join('')}
+          ${imgs.map(({ src, label }, k) => `<figure data-cursor="Zoom"><img src="${src}" alt="${esc(d.name)} — ${label || 'photo ' + (k + 1)}" ${k > 1 ? 'loading="lazy"' : ''}/><figcaption class="mono">${label}</figcaption></figure>`).join('')}
         </div>
         <span class="d-counter mono"><b>01</b> / ${pad(imgs.length)}</span>
         <div class="d-progress">${imgs.map((_, k) => `<i class="${k === 0 ? 'on' : ''}"></i>`).join('')}</div>
-        <span class="d-hint mono">Swipe →</span>
+        ${imgs.length > 1 ? `<button class="d-arrow d-arrow--prev" aria-label="Previous photo" disabled>←</button><button class="d-arrow d-arrow--next" aria-label="Next photo">→</button><span class="d-hint mono">Swipe →</span>` : ''}
       </div>
       <div class="d-info">
         <div class="d-meta mono"><span>No. ${pad(i + 1)} — ${esc(d.category || brand.drop)}</span><span>${esc(d.type)}</span></div>
         <h2 class="display d-name">${words.map((w) => `<span class="line-mask"><span>${esc(w)}</span></span>`).join('')}</h2>
         <p class="d-tag">${esc(d.tagline)}</p>
+        ${price ? `<p class="d-price"><span class="mono">Price</span>${price}</p>` : ''}
         <div class="d-story">${d.story.map((p) => `<p>${esc(p)}</p>`).join('')}</div>
         <dl class="d-specs mono">${d.details.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>
         <div class="d-actions">
@@ -215,31 +220,55 @@ function detailHTML(d) {
         </div>
       </div>
     </div>
-    <a class="d-next" href="#/drop/${next.slug}" style="--n-accent:${next.accent}" data-cursor="Next">
-      <span class="mono d-next__label">Next story — ${pad(designs.indexOf(next) + 1)} / ${pad(designs.length)}</span>
-      <span class="display d-next__name">${esc(next.name)}</span>
-      <span class="d-next__img" style="--m-accent:${next.accent}"><img src="${imagesFor(next)[0]}" alt="" loading="lazy"/></span>
-    </a>`
+    <nav class="d-more" aria-label="All designs">
+      <div class="d-more__head">
+        <span class="mono d-more__label">All designs · ${pad(designs.length)}</span>
+        <a class="mono d-more__next" href="#/drop/${next.slug}">Next: ${esc(next.name)} →</a>
+      </div>
+      <div class="d-more__strip" data-lenis-prevent>
+        ${designs.map((x, k) => `<a class="d-more__card${x === d ? ' is-current' : ''}" href="#/drop/${x.slug}" style="--m-accent:${x.accent}" data-cursor="${x === d ? 'Viewing' : 'Open'}"${x === d ? ' aria-current="page"' : ''}>
+          <span class="d-more__img"><img src="${imagesFor(x)[0]}" alt="" loading="lazy"/></span>
+          <span class="mono d-more__n">${pad(k + 1)}${x === d ? ' · Viewing' : priceOf(x) ? ` · ${priceOf(x)}` : ''}</span>
+          <span class="display d-more__name">${esc(x.name)}</span>
+        </a>`).join('')}
+      </div>
+    </nav>`
 }
+
+let slideKeys = null
+addEventListener('keydown', (e) => { if (current && !e.target.closest?.('input, textarea')) slideKeys?.(e) })
 
 function wireDetail() {
   const strip = $('.d-strip', content)
   const figs = $$('figure', strip)
   const bars = $$('.d-progress i', content)
   const counter = $('.d-counter b', content)
+  const prev = $('.d-arrow--prev', content)
+  const next = $('.d-arrow--next', content)
+  let at = 0
   const set = (k) => {
+    at = k
     counter.textContent = pad(k + 1)
     bars.forEach((b, j) => b.classList.toggle('on', j <= k))
+    if (prev) { prev.disabled = k === 0; next.disabled = k === figs.length - 1 }
   }
-  strip.addEventListener('scroll', () => {
-    if (strip.scrollWidth <= strip.clientWidth) return
-    set(Math.round(strip.scrollLeft / strip.clientWidth))
-  }, { passive: true })
-  const io = new IntersectionObserver((es) => es.forEach((e) => e.isIntersecting && set(figs.indexOf(e.target))), { root: scroller, threshold: 0.55 })
-  figs.forEach((f) => io.observe(f))
+  strip.addEventListener('scroll', () => set(Math.round(strip.scrollLeft / strip.clientWidth)), { passive: true })
+  // slides: arrows, and ← → keys while the story is open
+  const go = (k) => strip.scrollTo({ left: Math.max(0, Math.min(figs.length - 1, k)) * strip.clientWidth, behavior: reduced ? 'auto' : 'smooth' })
+  prev?.addEventListener('click', () => go(at - 1))
+  next?.addEventListener('click', () => go(at + 1))
+  slideKeys = (e) => { if (e.key === 'ArrowLeft') go(at - 1); else if (e.key === 'ArrowRight') go(at + 1) }
   figs.forEach((f) => f.addEventListener('click', () => openLightbox($('img', f).src)))
   const hint = $('.d-hint', content)
   if (hint) gsap.fromTo(hint, { x: 0 }, { x: 10, repeat: -1, yoyo: true, duration: 0.8, ease: 'sine.inOut' })
+  // long words (ENOUGH, RETREAT…) shrink the title until they fit the column
+  const name = $('.d-name', content)
+  const widest = Math.max(...$$('.line-mask > span', name).map((s) => s.getBoundingClientRect().width))
+  if (widest > name.clientWidth) name.style.fontSize = `${(parseFloat(getComputedStyle(name).fontSize) * name.clientWidth) / widest * 0.97}px`
+  // start the designs strip on the piece being viewed
+  const more = $('.d-more__strip', content)
+  const cur = $('.is-current', more)
+  if (more && cur) more.scrollLeft += cur.getBoundingClientRect().left - more.getBoundingClientRect().left - parseFloat(getComputedStyle(more).paddingLeft)
 }
 
 function revealDetail() {

@@ -4,7 +4,7 @@ import { Flip } from 'gsap/Flip'
 import { designs } from './content.js'
 import { imagesFor } from './mockup.js'
 import {
-  $, $$, fine, reduced, pad, esc, fillBrand, mediaHTML, lenis, initCursor, startRouter, riseLines, pageEnter,
+  $, $$, fine, reduced, pad, esc, priceOf, fillBrand, mediaHTML, lenis, initCursor, startRouter, riseLines, pageEnter,
   gsap, ScrollTrigger,
 } from './shared.js'
 
@@ -29,6 +29,7 @@ grid.innerHTML = designs
       <span class="item__name">${esc(d.name)}</span>
       <span class="item__cat mono">${esc(d.category || '')}</span>
       <span class="item__type mono">${esc(d.type)}</span>
+      ${priceOf(d) ? `<b class="item__price">${priceOf(d)}</b>` : ''}
       <span class="item__arrow" aria-hidden="true">→</span>
     </div>
   </a>`)

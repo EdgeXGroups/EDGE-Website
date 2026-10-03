@@ -7,7 +7,7 @@ import './admin.css'
 import { createClient } from '@supabase/supabase-js'
 import * as D from '../content.defaults.js'
 import { SUPABASE_URL, SUPABASE_KEY } from '../supabase.config.js'
-import { loadImage, splitMockup, singleView, alignPrint, garmentColour, portrait, toWebp } from './process.js'
+import { loadImage, splitMockup, singleView, alignPrint, garmentColour, portrait, photo, toWebp } from './process.js'
 
 const $ = (s, r = document) => r.querySelector(s)
 const $$ = (s, r = document) => [...r.querySelectorAll(s)]
@@ -25,6 +25,7 @@ function explain(err) {
   const m = err?.message || String(err)
   if (/row-level security|permission denied|violates.*policy/i.test(m)) return 'This account isn’t allowed to edit the site.'
   if (/Invalid login credentials/i.test(m)) return 'Wrong email or password.'
+  if (/Could not find the 'price' column/i.test(m)) return 'Prices need one database update — run supabase/migrations/0003_price.sql in the Supabase SQL editor.'
   if (/relation .* does not exist|Could not find the (table|function)/i.test(m)) return 'The database isn’t set up yet — run supabase/migrations/0001_site_content.sql.'
   if (/Failed to fetch|NetworkError/i.test(m)) return 'No connection — check your internet and try again.'
   return m
@@ -85,6 +86,7 @@ async function publish(msg = 'Published — live on the site') {
   const now = new Date().toISOString()
   const designs = data.designs.map((x, i) => ({
     slug: x.slug, position: i, name: x.name, type: x.type || null, category: x.category || null, tagline: x.tagline || null,
+    price: Number.isFinite(x.price) ? x.price : null,
     accent: x.accent || '#ff4a1c', garment: x.garment || null, model: x.model === 'card' ? 'card' : 'tee',
     story: x.story || [], details: x.details || [], images: x.images || [], prints: x.prints || null,
     published: x.published !== false, updated_at: now,
@@ -278,12 +280,19 @@ function openEditor(index) {
       </section>
 
       <section class="card">
+        <div><h3 class="mono">More photos</h3><p class="muted">Close-ups, people wearing it, the print on its own… They come after the front and back in the story's slides. Used as they are — no background removal.</p></div>
+        <label class="drop"><input type="file" accept="image/png,image/jpeg,image/webp" multiple data-in="extra" /><b>Add photos</b><span class="muted">Pick one or several.</span></label>
+        <div class="previews" data-extras></div>
+      </section>
+
+      <section class="card">
         <h3 class="mono">2 · Details</h3>
         <div class="grid2">
           <label class="f"><span>Name</span><input name="name" value="${esc(d.name)}" required /></label>
           <label class="f"><span>Link name</span><input name="slug" value="${esc(d.slug)}" ${isNew ? '' : 'readonly'} /><small>${isNew ? 'Filled in from the name. Used in the web address.' : 'Fixed once created, so shared links keep working.'}</small></label>
           <label class="f"><span>Type</span><input name="type" list="types" value="${esc(d.type)}" /></label>
           <label class="f"><span>Category</span><input name="category" list="cats" value="${esc(d.category)}" placeholder="e.g. Originals, Anime, Motorsport" /></label>
+          <label class="f"><span>Price (₹)</span><input name="price" type="number" min="0" step="1" inputmode="numeric" value="${d.price ?? ''}" placeholder="e.g. 1499" /><small>Leave empty to hide the price.</small></label>
         </div>
         <datalist id="types">${TYPES.map((t) => `<option value="${t}">`).join('')}</datalist>
         <datalist id="cats">${cats.map((c) => `<option value="${esc(c)}">`).join('')}</datalist>
@@ -321,6 +330,22 @@ function openEditor(index) {
   }
   previews()
 
+  // extra photos: kept urls + new canvases, in display order
+  let extras = (d.images || []).slice(2).map((src) => ({ src }))
+  function renderExtras() {
+    $('[data-extras]', sheet).innerHTML = extras.map((x, k) => `<div class="pv pv--extra"><div class="thumb"><img src="${x.src || x.canvas.toDataURL('image/webp', 0.6)}" alt="" /></div>
+      <span class="pv__tools"><button class="b b--sm" type="button" data-x="left" data-k="${k}" ${k ? '' : 'disabled'} aria-label="Move earlier">←</button><button class="b b--sm" type="button" data-x="del" data-k="${k}">Remove</button><button class="b b--sm" type="button" data-x="right" data-k="${k}" ${k < extras.length - 1 ? '' : 'disabled'} aria-label="Move later">→</button></span></div>`).join('')
+  }
+  renderExtras()
+  $('[data-extras]', sheet).addEventListener('click', (e) => {
+    const b = e.target.closest('[data-x]')
+    if (!b) return
+    const k = +b.dataset.k
+    if (b.dataset.x === 'del') extras.splice(k, 1)
+    else { const j = b.dataset.x === 'left' ? k - 1 : k + 1; [extras[k], extras[j]] = [extras[j], extras[k]] }
+    renderExtras()
+  })
+
   // name → slug
   f('name').addEventListener('input', () => { if (isNew) f('slug').value = slugify(f('name').value) })
   // image mode
@@ -337,6 +362,15 @@ function openEditor(index) {
     if (!input?.files?.[0]) return
     const file = input.files[0]
     const which = input.dataset.in
+    if (which === 'extra') {
+      setStatus('')
+      for (const fl of input.files) {
+        try { extras.push({ canvas: photo(await loadImage(fl)) }) } catch (err) { toast(`${fl.name}: ${err.message}`, true) }
+      }
+      renderExtras()
+      input.value = ''
+      return
+    }
     setStatus('Processing image…', true)
     await new Promise((r) => setTimeout(r, 30)) // let the spinner paint
     try {
@@ -382,11 +416,17 @@ function openEditor(index) {
       const up = async (c, label, q) => upload(await toWebp(c, q), `designs/${slug}/${label}`)
       if (pending.front) d.images = [await up(pending.front, 'front', 0.86), ...(d.images?.slice(1) || [])]
       if (pending.back) d.images = [d.images[0], await up(pending.back, 'back', 0.86)]
+      const extraUrls = []
+      for (const [k, x] of extras.entries()) extraUrls.push(x.src || (await up(x.canvas, `photo-${k + 1}`, 0.85)))
+      const base = (d.images || []).slice(0, 2)
+      if (extraUrls.length && base.length < 2) base[1] = '' // keep slot 2 for the back, so extras never pose as one
+      d.images = [...base, ...extraUrls]
       if (pending.printFront) d.prints = { front: await up(pending.printFront, 'print-front', 0.9), back: await up(pending.printBack, 'print-back', 0.9) }
       Object.assign(d, {
         name, slug,
         type: f('type').value.trim(),
         category: f('category').value.trim(),
+        price: f('price').value === '' ? null : Math.max(0, Math.round(+f('price').value)),
         tagline: f('tagline').value.trim(),
         story: f('story').value.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean),
         details: f('details').value.split('\n').map((l) => l.split(':')).filter((p) => p.length > 1 && p[0].trim()).map(([k, ...v]) => [k.trim(), v.join(':').trim()]),
@@ -400,6 +440,7 @@ function openEditor(index) {
       // clean up replaced uploads
       if (pending.front) removeMedia(old.images[0])
       if (pending.back) removeMedia(old.images[1])
+      old.images.slice(2).filter((u) => !d.images.includes(u)).forEach(removeMedia)
       if (pending.printFront && old.prints) { removeMedia(old.prints.front); removeMedia(old.prints.back) }
       close()
       renderShell()

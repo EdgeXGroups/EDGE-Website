@@ -35,8 +35,10 @@ async function teeTexture(d, maxAniso) {
   g.imageSmoothingQuality = 'high'
   g.fillStyle = d.garment || '#ddd'
   g.fillRect(0, 0, c.width, c.height)
-  const srcs = d.prints ? [d.prints.front, d.prints.back] : d.images.slice(0, 2)
-  const [front, back] = await Promise.all(srcs.map((src) => (src ? loadImage(src) : null)))
+  // one broken image must never take the showroom down: prints → mockups → plain fabric
+  const load = (srcs) => Promise.all(srcs.map((src) => (src ? loadImage(src).catch(() => null) : null)))
+  let [front, back] = d.prints ? await load([d.prints.front, d.prints.back]) : [null, null]
+  if (!front && !back) [front, back] = await load((d.images || []).slice(0, 2))
   // scale so the mockup's body width = the model's body width, hems aligned;
   // the print keeps its proportions and stays on the torso
   const k = (ATLAS.bodyW * ATLAS.pxPerM * PRINT_INSET) / MOCKUP.bodyW
@@ -86,6 +88,7 @@ export async function createShowroom3D(spot, designs) {
     const inner = new Group() // turn + bob live here
     group.add(inner)
     let mats = []
+    try {
     if (d.model === 'tee' && d.images?.length) {
       const mat = new MeshStandardMaterial({ map: await teeTexture(d, maxAniso), roughness: 0.92, metalness: 0, side: DoubleSide })
       const mesh = new Mesh(teeGeo, mat)
@@ -94,7 +97,8 @@ export async function createShowroom3D(spot, designs) {
     } else {
       // two back-to-back photo cards
       const loader = new TextureLoader()
-      const [ft, bt] = await Promise.all(d.images.slice(0, 2).map((src) => loader.loadAsync(src)))
+      const [ft, bt] = await Promise.all((d.images || []).slice(0, 2).map((src) => loader.loadAsync(src).catch(() => null)))
+      if (!ft) throw new Error(`No photo for ${d.slug}`)
       const geo = new PlaneGeometry(TEE_H * 0.8 * 1.06, TEE_H * 1.06)
       geo.translate(0, TEE_H * 0.53, 0)
       for (const [tex, rot] of [[ft, 0], [bt || ft, Math.PI]]) {
@@ -105,6 +109,9 @@ export async function createShowroom3D(spot, designs) {
         inner.add(card)
         mats.push(m)
       }
+    }
+    } catch (err) {
+      console.warn(`3D showroom: skipped ${d.slug}`, err) // the rest of the showroom still works
     }
     scene.add(group)
     return { d, group, inner, mats, bob: Math.random() * 6 }
@@ -148,7 +155,7 @@ export async function createShowroom3D(spot, designs) {
         p.group.scale.setScalar(s * sl.s)
         p.inner.position.y = Math.sin(time * 1.2 + p.bob) * 0.012
         // the turn: a real rotation now, plus a slow idle sway
-        const turn = (sl.turn ?? 0) * Math.PI
+        const turn = (sl.turn ?? 0) * Math.PI + (sl.spin || 0) // scroll turn + hand turn
         p.inner.rotation.y = turn + Math.sin(time * 0.5 + p.bob) * 0.12 * (1 - k)
         p.mats.forEach((m) => {
           const fading = vis < 0.999

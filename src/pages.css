@@ -40,8 +40,6 @@
 .d-strip figure { position: relative; background: radial-gradient(90% 75% at 50% 42%, color-mix(in srgb, var(--m-accent) 48%, #1c1c1c) 0%, #0a0a0a 78%); }
 .d-strip img { object-fit: contain; }
 .d-strip figcaption { position: absolute; right: var(--gutter); top: calc(24px + env(safe-area-inset-top)); color: rgba(255, 255, 255, 0.7); }
-.d-next__img { background: radial-gradient(90% 80% at 50% 40%, color-mix(in srgb, var(--m-accent) 55%, #222), #111 80%); }
-.d-next__img img { object-fit: contain; }
 @media (max-width: 899px) { .d-strip figcaption { right: calc(var(--gutter) + 64px); } }
 @media (min-width: 900px) { .d-strip figcaption { top: auto; bottom: 20px; } }
 
@@ -76,6 +74,8 @@
 .spot__num { color: var(--s-accent); }
 .spot__name { font-size: clamp(28px, 8.4vw, 48px); }
 .spot__tag { font-size: clamp(16px, 4.3vw, 24px); color: #c9c5bc; max-width: 30ch; line-height: 1.15; }
+.spot__price { color: var(--bone); letter-spacing: 0.12em; }
+.spot__price:empty { display: none; }
 .spot__cta { margin-top: 4px; justify-self: center; padding: 13px 22px; }
 .spot__cta::before { background: var(--s-accent); }
 .spot__progress { position: absolute; left: var(--gutter); right: var(--gutter); bottom: calc(10px + env(safe-area-inset-bottom)); height: 1px; background: rgba(255, 255, 255, 0.12); }
@@ -129,6 +129,7 @@ body:has(.nav.is-hidden) .archive__bar { top: 0; }
 .item__name { font-weight: 800; font-stretch: 112%; text-transform: uppercase; font-size: 15px; line-height: 1.05; letter-spacing: -0.01em; }
 .item__cat { display: none; }
 .item__type { grid-column: 2; color: var(--mute); font-size: 10px; }
+.item__price { grid-column: 2; font-weight: 800; font-stretch: 112%; font-size: 17px; line-height: 1; margin-top: 4px; color: var(--bone); white-space: nowrap; }
 .item__arrow { display: none; }
 
 /* Index (list) view */
@@ -157,17 +158,19 @@ body:has(.nav.is-hidden) .archive__bar { top: 0; }
   .archive__grid[data-view='grid'] .item:nth-child(3n + 2) { margin-top: 80px; }
   .item__meta { grid-template-columns: 40px 1fr auto; }
   .item__name { font-size: 20px; }
+  .item__price { grid-column: 3; grid-row: 2; justify-self: end; margin-top: 0; font-size: 20px; }
   .item__cat { display: block; grid-row: 1; grid-column: 3; color: var(--mute); }
 
   .archive__grid[data-view='list'] .item { grid-template-columns: 1fr; padding: 22px 0; transition: opacity 0.4s; }
   .archive__grid[data-view='list'] .item__media { display: none; }
-  .archive__grid[data-view='list'] .item__meta { grid-template-columns: 60px 1fr 180px 220px 40px; align-items: center; }
+  .archive__grid[data-view='list'] .item__meta { grid-template-columns: 60px 1fr 160px 200px 120px 40px; align-items: center; }
   .archive__grid[data-view='list'] .item__name { font-size: clamp(36px, 4.6vw, 80px); transition: transform 0.6s var(--ease-out), color 0.3s; }
   .archive__grid[data-view='list'] .item:hover .item__name { transform: translateX(16px); color: var(--m-accent); }
   .archive__grid[data-view='list'] .item__cat, .archive__grid[data-view='list'] .item__type { grid-row: 1; }
   .archive__grid[data-view='list'] .item__cat { grid-column: 3; }
   .archive__grid[data-view='list'] .item__type { grid-column: 4; }
-  .archive__grid[data-view='list'] .item__arrow { grid-column: 5; grid-row: 1; text-align: right; }
+  .archive__grid[data-view='list'] .item__price { grid-column: 5; grid-row: 1; font-size: 24px; }
+  .archive__grid[data-view='list'] .item__arrow { grid-column: 6; grid-row: 1; text-align: right; }
   .archive__grid[data-view='list']:hover .item:not(:hover) { opacity: 0.35; }
 
   .archive__float {
@@ -313,3 +316,7 @@ body.menu-open .nav__shop { visibility: hidden; }
 /* 3D garments take over from the photos once the model has loaded */
 .spot.is-3d .spot__piece img { visibility: hidden; }
 .spot.is-3d .spot__piece { filter: none; }
+
+/* the lit piece can be turned by hand: horizontal drags turn it, vertical ones still scroll */
+.spot.is-3d.is-live .spot__slot[data-role='0'] { cursor: grab; touch-action: pan-y; }
+.spot.is-3d.is-live .spot__slot[data-role='0']:active { cursor: grabbing; }

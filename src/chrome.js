@@ -27,7 +27,7 @@ const before = `
     <a href="${home ? '#top' : '/'}" class="nav__logo" aria-label="EDGE — home"><img src="/brand/edge-mark.png" alt="" /></a>
     <div class="nav__status">${status[page] || ''}</div>
     <nav class="nav__links" aria-label="Primary">
-      ${LINKS.map(([l, h, p]) => `<a href="${h}" data-magnetic${current(p)}>${l}</a>`).join('')}
+      ${LINKS.map(([l, h, p]) => `<a href="${h}"${current(p)}>${l}</a>`).join('')}
     </nav>
     <div class="nav__right">
       ${page === 'collection' ? '' : '<a href="/collection.html" class="nav__shop">Collection<i>→</i></a>'}

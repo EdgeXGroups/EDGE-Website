@@ -4,10 +4,10 @@ import { brand, designs, featured, manifesto, pillars } from './content.js'
 import { createHero } from './hero.js'
 import { createSpotlight } from './spotlight.js'
 import { createShowroom3D } from './showroom3d.js'
-import { imagesFor } from './mockup.js'
+import { frontBack } from './mockup.js'
 import { Color } from 'three'
 import {
-  $, $$, reduced, pad, esc, fillBrand, lenis, scrollTo,
+  $, $$, reduced, pad, esc, priceOf, fillBrand, lenis, scrollTo,
   initCursor, startRouter, riseLines, arrivedFromSite, pageEnter, gsap, ScrollTrigger, SplitText,
 } from './shared.js'
 
@@ -51,7 +51,7 @@ function buildManifesto() {
 function buildSpotlight() {
   $('.spot__stage').innerHTML = featured
     .map((d) => {
-      const [front, back] = imagesFor(d)
+      const [front, back] = frontBack(d)
       return `
       <div class="spot__slot" style="--m-accent:${d.accent}" role="button" tabindex="-1" aria-label="${esc(d.name)}">
         <div class="spot__bob"><div class="spot__piece">
@@ -70,6 +70,7 @@ function setCaption(d) {
   $('.spot__num').textContent = `No. ${pad(designs.indexOf(d) + 1)} — ${d.category || brand.drop}`
   $('.spot__name').textContent = d.name
   $('.spot__tag').textContent = d.tagline
+  $('.spot__price').textContent = priceOf(d)
   $('.spot__cta').href = `#/drop/${d.slug}`
 }
 
@@ -216,7 +217,7 @@ function initSpotlight() {
     slots.forEach((sl, i) => {
       const role = roleOf(i)
       sl.el.dataset.role = role
-      sl.el.dataset.cursor = role === 0 ? 'Read story' : 'Bring forward'
+      sl.el.dataset.cursor = role === 0 ? (show3d ? 'Drag · tap' : 'Read story') : 'Bring forward'
       const to = target(role)
       if (animate) gsap.to(sl, { ...to, duration: reduced ? 0.01 : 1, ease: 'expo.inOut', overwrite: true, onUpdate: () => { apply(sl); push() } })
       else { Object.assign(sl, to); apply(sl) }
@@ -228,7 +229,9 @@ function initSpotlight() {
   // swap: dir +1 brings the right-hand piece into the light, -1 the left
   function swap(dir) {
     if (n < 2) return
+    const leaving = slots[centre]
     centre = (centre + dir + n) % n
+    gsap.to(leaving, { spin: 0, duration: 1, ease: 'expo.inOut', onUpdate: push }) // hand-turned piece faces front again
     place(true)
     const d = featured[centre]
     gsap.timeline()
@@ -253,15 +256,48 @@ function initSpotlight() {
   }))
   $('.spot__prev').addEventListener('click', () => swap(-1))
   $('.spot__next').addEventListener('click', () => swap(1))
-  // swipe
+  // drag the lit piece to turn it by hand; swipe anywhere else to swap
   let sx = null
-  sec.addEventListener('pointerdown', (e) => { sx = e.clientX; dragged = false })
+  let spinning = null // { x, last, t, v } while turning the centre piece
+  slots.forEach((sl) => (sl.spin = 0))
+  sec.addEventListener('pointerdown', (e) => {
+    dragged = false
+    if (!sec.classList.contains('is-live')) return
+    const onCentre = e.target.closest('.spot__slot') === slots[centre].el
+    if (onCentre && show3d) {
+      gsap.killTweensOf(slots[centre], 'spin')
+      spinning = { x: e.clientX, last: e.clientX, t: performance.now(), v: 0 }
+      slots[centre].el.setPointerCapture?.(e.pointerId)
+    } else sx = e.clientX
+  })
+  sec.addEventListener('pointermove', (e) => {
+    if (!spinning) return
+    const now = performance.now()
+    const dx = e.clientX - spinning.last
+    slots[centre].spin += dx * 0.012
+    spinning.v = (dx * 0.012) / Math.max(1, now - spinning.t) * 16 // radians per frame
+    spinning.last = e.clientX
+    spinning.t = now
+    if (Math.abs(e.clientX - spinning.x) > 6) dragged = true
+    push()
+  })
+  const endSpin = () => {
+    if (!spinning) return
+    const sl = slots[centre]
+    const v = spinning.v
+    spinning = null
+    // a little momentum after letting go
+    gsap.to(sl, { spin: sl.spin + v * 22, duration: 1.1, ease: 'power3.out', onUpdate: push })
+    setTimeout(() => (dragged = false), 50)
+  }
   sec.addEventListener('pointerup', (e) => {
+    if (spinning) return endSpin()
     if (sx === null || !sec.classList.contains('is-live')) return
     const dx = e.clientX - sx
     sx = null
     if (Math.abs(dx) > 45) { dragged = true; swap(dx < 0 ? 1 : -1); setTimeout(() => (dragged = false), 50) }
   })
+  sec.addEventListener('pointercancel', endSpin)
   addEventListener('keydown', (e) => {
     if (!sec.classList.contains('is-live') || document.body.classList.contains('is-locked')) return
     const r = sec.getBoundingClientRect()
@@ -282,7 +318,7 @@ function initSpotlight() {
   layout()
   if (spot) {
     createShowroom3D(spot, featured)
-      .then((s3) => { show3d = s3; spot.add(s3); sec.classList.add('is-3d'); layout(); })
+      .then((s3) => { show3d = s3; spot.add(s3); sec.classList.add('is-3d'); layout(); place(false) })
       .catch((err) => console.warn('3D showroom unavailable, using photos', err))
   }
   addEventListener('resize', layout)
@@ -341,9 +377,11 @@ function initScroll() {
 
   gsap.from('.foot__mark img, .foot__info li', { y: 30, opacity: 0, duration: 1, stagger: 0.06, ease: 'expo.out', scrollTrigger: { trigger: '.foot', start: 'top 92%' } })
   // the tapes sit on the seam between hero and showroom; they swing as that seam crosses the screen
+  // (a smaller swing on phones so the two never cross on the narrow screen)
   const seam = { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: true }
-  gsap.fromTo('.tape--a', { rotate: -3.5 }, { rotate: -9, ease: 'none', scrollTrigger: seam })
-  gsap.fromTo('.tape--b', { rotate: 3 }, { rotate: 8, ease: 'none', scrollTrigger: { ...seam } })
+  const wide = matchMedia('(min-width: 900px)').matches
+  gsap.fromTo('.tape--a', { rotate: -3.5 }, { rotate: wide ? -9 : -5, ease: 'none', scrollTrigger: seam })
+  gsap.fromTo('.tape--b', { rotate: 3 }, { rotate: wide ? 8 : 4.5, ease: 'none', scrollTrigger: { ...seam } })
 
 }
 
