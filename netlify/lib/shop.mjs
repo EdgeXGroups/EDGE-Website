@@ -29,7 +29,8 @@ export const handler = (fn) => async (req) => {
 }
 
 function env(name) {
-  const v = process.env[name]
+  // pasted values often pick up a space, a line break or quotes — none of them belong in a key
+  const v = (process.env[name] || '').trim().replace(/^["']|["']$/g, '')
   if (!v) throw new HttpError(503, `Checkout isn’t switched on yet (${name} is missing on the server).`)
   return v
 }
@@ -42,7 +43,14 @@ export async function db(path, { method = 'GET', body, prefer } = {}) {
   if (!key.startsWith('sb_')) headers.authorization = `Bearer ${key}` // legacy JWT keys go in both headers
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) })
   const text = await res.text()
-  if (!res.ok) throw new Error(`Supabase ${method} ${path} → ${res.status} ${text}`)
+  if (!res.ok) {
+    console.error(`Supabase ${method} ${path} → ${res.status} ${text}`)
+    let msg = text
+    try { msg = JSON.parse(text).message || text } catch {}
+    if (res.status === 401 || res.status === 403) throw new HttpError(503, 'Checkout setup problem: Supabase rejected the server key. Check SUPABASE_SERVICE_ROLE_KEY in Netlify (the secret key, sb_secret_…), then redeploy.')
+    if (/PGRST205|does not exist|Could not find the table/i.test(text)) throw new HttpError(503, 'Checkout setup problem: the orders tables are missing — run supabase/migrations/0006_accounts_orders.sql.')
+    throw new HttpError(500, `Couldn’t save your order (database ${res.status}: ${String(msg).slice(0, 160)}). You have not been charged.`)
+  }
   return text ? JSON.parse(text) : null
 }
 
@@ -111,8 +119,12 @@ export async function razorpay(path, body) {
     headers: { authorization: `Basic ${auth}`, 'content-type': 'application/json' },
     body: body && JSON.stringify(body),
   })
-  const data = await res.json()
-  if (!res.ok) throw new Error(`Razorpay ${path} → ${res.status} ${JSON.stringify(data)}`)
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    console.error(`Razorpay ${path} → ${res.status} ${JSON.stringify(data)}`)
+    if (res.status === 401) throw new HttpError(503, 'Checkout setup problem: Razorpay rejected the API keys. In Netlify, RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET must be the same pair (both test, the current secret, no spaces) — then redeploy.')
+    throw new HttpError(502, `Razorpay couldn’t start the payment (${data?.error?.description || res.status}). You have not been charged.`)
+  }
   return data
 }
 

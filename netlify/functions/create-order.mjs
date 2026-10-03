@@ -12,12 +12,18 @@ export default handler(async (req) => {
     method: 'POST', prefer: 'return=representation',
     body: { user_id: user?.id || null, ...customer, items: bag.lines, subtotal: bag.subtotal, shipping: bag.shipping, total: bag.total },
   })
-  const rp = await razorpay('orders', {
-    amount: Math.round(bag.total * 100), // paise
-    currency: 'INR',
-    receipt: order.number,
-    notes: { edge_order: order.number, email: customer.email },
-  })
+  let rp
+  try {
+    rp = await razorpay('orders', {
+      amount: Math.round(bag.total * 100), // paise
+      currency: 'INR',
+      receipt: order.number,
+      notes: { edge_order: order.number, email: customer.email },
+    })
+  } catch (err) {
+    await db(`orders?id=eq.${order.id}`, { method: 'DELETE' }).catch(() => {}) // no half-made orders
+    throw err
+  }
   await db(`orders?id=eq.${order.id}`, { method: 'PATCH', body: { razorpay_order_id: rp.id } })
 
   return {
