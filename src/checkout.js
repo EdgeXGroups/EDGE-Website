@@ -160,6 +160,19 @@ form.addEventListener('submit', async (e) => {
     prefill: { name: order.customer.name, email: order.customer.email, contact: `+91${order.customer.phone}` },
     notes: { edge_order: order.number },
     theme: { color: '#ff4a1c' },
+    // UPI first (most Indian buyers pay that way); cards, netbanking, wallets follow.
+    // Razorpay only shows methods that are switched on for the account.
+    config: {
+      display: {
+        blocks: { upi: { name: 'Pay with UPI', instruments: [{ method: 'upi' }] } },
+        sequence: ['block.upi'],
+        preferences: { show_default_blocks: true },
+      },
+    },
+    // redirect mode: the bank/OTP step opens in this tab, not a pop-up a browser can block,
+    // and Razorpay brings the customer back through /api/razorpay-callback
+    redirect: true,
+    callback_url: `${location.origin}/api/razorpay-callback`,
     handler: async (resp) => {
       setBusy(true, 'Confirming payment…')
       try {
@@ -197,5 +210,21 @@ fillBrand()
 initCursor()
 riseLines('.sub__title', { immediate: true, delay: 0.2 })
 ready.then(renderSummary)
+
+// back from Razorpay (redirect mode): ?paid=EDGE-1001 or ?failed=reason
+{
+  const q = new URLSearchParams(location.search)
+  if (q.has('paid') || q.has('failed')) {
+    history.replaceState(history.state, '', location.pathname)
+    if (q.has('paid')) {
+      let phone = ''
+      try { phone = JSON.parse(localStorage.getItem(REMEMBER))?.phone || '' } catch {}
+      ready.then(() => success(q.get('paid'), phone.replace(/\D/g, '').slice(-10)))
+    } else {
+      errorEl.textContent = `${q.get('failed')} Your bag is still here — try again or pick another method.`
+      form.scrollIntoView({ block: 'end' })
+    }
+  }
+}
 pageEnter()
 lenis?.start()
