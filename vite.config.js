@@ -4,6 +4,7 @@ import { resolve } from 'node:path'
 export default defineConfig({
   build: {
     target: 'es2022', // content.js uses top-level await
+    sourcemap: 'hidden', // maps for PostHog error traces; uploaded then deleted by scripts/sourcemaps.mjs
     rollupOptions: {
       input: {
         main: resolve(import.meta.dirname, 'index.html'),

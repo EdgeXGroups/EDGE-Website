@@ -2,7 +2,7 @@
 // even if the customer closed the tab before the checkout could confirm it.
 // Razorpay → Settings → Webhooks: URL https://<site>/api/razorpay-webhook,
 // events payment.captured, order.paid, payment.failed, and a secret (= RAZORPAY_WEBHOOK_SECRET).
-import { json, webhookSignatureOk, markPaid, db } from '../lib/shop.mjs'
+import { json, webhookSignatureOk, markPaid, db, reportError } from '../lib/shop.mjs'
 
 export default async (req) => {
   if (req.method !== 'POST') return json(405, { error: 'POST only' })
@@ -23,6 +23,7 @@ export default async (req) => {
     return json(200, { ok: true })
   } catch (err) {
     console.error(err)
+    await reportError(err, { function: 'razorpay-webhook' })
     return json(500, { error: 'webhook failed' }) // Razorpay retries
   }
 }

@@ -3,7 +3,7 @@
 // tab instead of a pop-up (pop-ups get blocked, and the payment then hangs).
 // Razorpay posts a form here; we check the signature, mark the order paid and
 // send the customer back to the checkout page with the result.
-import { paymentSignatureOk, markPaid } from '../lib/shop.mjs'
+import { paymentSignatureOk, markPaid, reportError } from '../lib/shop.mjs'
 
 export default async (req) => {
   const back = (query) => Response.redirect(`${new URL(req.url).origin}/checkout.html?${query}`, 303)
@@ -26,6 +26,7 @@ export default async (req) => {
     return back(`paid=${encodeURIComponent(order?.number || '')}`)
   } catch (err) {
     console.error(err)
+    await reportError(err, { function: 'razorpay-callback' })
     return back(`failed=${encodeURIComponent('Something went wrong confirming your payment. If you were charged, message us — nothing is lost.')}`)
   }
 }

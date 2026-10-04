@@ -1,5 +1,5 @@
 [build]
-  command = "npm run build"
+  command = "npm run build && node scripts/sourcemaps.mjs"
   publish = "dist"
 
 [build.environment]

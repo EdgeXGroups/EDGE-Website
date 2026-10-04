@@ -80,6 +80,11 @@ One dashboard, two sources:
 
 Events go through the site itself (`/ingest/*` → PostHog EU, in `netlify.toml`) so ad blockers don't drop them; the admin reads them back via `/api/admin-overview`. The site sends these events (`src/analytics.js`): page views/leaves (automatic), `design_viewed`, `design_closed` (with seconds), `add_to_bag`, `remove_from_bag`, `wishlist_add/remove`, `checkout_started`, `order_paid`. PostHog loads after the page is idle, so it doesn't slow anything down.
 
+### Errors
+- **Browser errors** are captured by PostHog automatically (Error tracking). Every Netlify build uploads the sourcemaps to PostHog (`scripts/sourcemaps.mjs`, official `@posthog/cli`) and then deletes them from `dist/`, so traces show real files and lines without publishing the source.
+- **Server errors** — crashes and setup problems in the checkout/payment functions — are sent to the same Error tracking (`reportError` in `netlify/lib/shop.mjs`). Customer mistakes (bad PIN code, sold-out size) aren't.
+- The sourcemap upload needs the personal API key to have **Error tracking: Write** as well as **Query: Read**.
+
 ### PostHog setup (one time)
 1. Sign up at posthog.com (pick **US** or **EU** cloud) and create a project for the site.
 2. **Project settings → Project API key** (`phc_…`, public by design) → paste into `src/analytics.config.js` as `POSTHOG_KEY`; set `POSTHOG_HOST` to `https://us.i.posthog.com` or `https://eu.i.posthog.com`. Commit + deploy — events start flowing.

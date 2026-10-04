@@ -9,6 +9,19 @@
 import { createHmac, timingSafeEqual } from 'node:crypto'
 import { SUPABASE_URL, SUPABASE_KEY } from '../../src/supabase.config.js'
 import { lineProblem, priceNum, sizesOf, shippingFor, MAX_QTY } from '../../src/commerce.js'
+import { PostHog } from 'posthog-node'
+import { POSTHOG_KEY, POSTHOG_HOST } from '../../src/analytics.config.js'
+
+// Server crashes → PostHog Error tracking, next to the browser errors.
+// A short-lived client per call: functions freeze once they respond, so flush first.
+export async function reportError(err, props = {}) {
+  if (!POSTHOG_KEY) return
+  try {
+    const ph = new PostHog(POSTHOG_KEY, { host: POSTHOG_HOST, flushAt: 1, flushInterval: 0 })
+    ph.captureException(err instanceof Error ? err : new Error(String(err)), 'edge-server', { ...props, source: 'netlify-function', $process_person_profile: false })
+    await ph.shutdown(3000)
+  } catch {}
+}
 
 export class HttpError extends Error {
   constructor(status, message) { super(message); this.status = status }
@@ -30,6 +43,8 @@ export const handler = (fn) => async (req, context) => {
     return json(200, await fn(req))
   } catch (err) {
     if (!(err instanceof HttpError)) console.error(err)
+    // real crashes and setup problems (5xx) are worth knowing about; a customer typo (4xx) isn't
+    if (!(err instanceof HttpError) || err.status >= 500) await reportError(err, { function: context?.function?.name || new URL(req.url).pathname, status: err.status || 500 })
     return json(err.status || 500, { error: err instanceof HttpError ? err.message : 'Something went wrong on our side. You have not been charged.' })
   }
 }
