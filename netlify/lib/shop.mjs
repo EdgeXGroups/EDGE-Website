@@ -14,11 +14,17 @@ export class HttpError extends Error {
   constructor(status, message) { super(message); this.status = status }
 }
 
+// which copy of the site answered, and whether it can see its settings (counts + yes/no only)
+let diag = ''
+const setDiag = (context) => {
+  diag = `deploy=${context?.deploy?.id || '?'}; ctx=${context?.deploy?.context || '?'}; env=${Object.keys(process.env).length}; svc=${rawEnv('SUPABASE_SERVICE_ROLE_KEY') ? 'yes' : 'no'}`
+}
 export const json = (status, body) =>
-  new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } })
+  new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json', 'cache-control': 'no-store', 'x-edge-diag': diag } })
 
 // wrap a handler: POST only, JSON in, errors out as { error }
-export const handler = (fn) => async (req) => {
+export const handler = (fn) => async (req, context) => {
+  setDiag(context)
   if (req.method !== 'POST') return json(405, { error: 'POST only' })
   try {
     return json(200, await fn(req))
@@ -32,7 +38,7 @@ export const handler = (fn) => async (req) => {
 export const rawEnv = (name) => globalThis.Netlify?.env?.get?.(name) ?? process.env[name] ?? ''
 // which server settings this function can see — names and yes/no only, never values
 export const envReport = () => ['SUPABASE_SERVICE_ROLE_KEY', 'RAZORPAY_KEY_ID', 'RAZORPAY_KEY_SECRET', 'RAZORPAY_WEBHOOK_SECRET', 'POSTHOG_PERSONAL_API_KEY', 'POSTHOG_PROJECT_ID']
-  .map((n) => `${n} ${rawEnv(n) ? '✓' : '✗'}`).join(' · ')
+  .map((n) => `${n} ${rawEnv(n) ? '✓' : '✗'}`).join(' · ') + ` [${diag}]`
 
 function env(name) {
   // pasted values often pick up a space, a line break or quotes — none of them belong in a key
