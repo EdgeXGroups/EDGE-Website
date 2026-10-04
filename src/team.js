@@ -6,7 +6,7 @@ import { $, $$, pad, esc, fillBrand, lenis, initCursor, riseLines, pageEnter, gs
 $('.crew').innerHTML = team
   .map((m, i) => `
   <article class="member crew__card" data-cursor="Hi!">
-    <div class="member__photo">${m.photo ? `<img src="${m.photo}" alt="${esc(m.name)}" loading="lazy" />` : `<span class="member__mono" aria-hidden="true">${esc(m.name[0])}</span>`}
+    <div class="member__photo">${m.photo ? `<img src="${esc(m.photo)}" alt="${esc(m.name)}" loading="lazy" />` : `<span class="member__mono" aria-hidden="true">${esc(m.name[0])}</span>`}
       <span class="crew__n mono">${pad(i + 1)}</span>
     </div>
     <h2 class="member__name">${esc(m.name)}</h2>

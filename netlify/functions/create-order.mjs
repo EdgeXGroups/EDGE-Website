@@ -37,4 +37,5 @@ export default handler(async (req) => {
   }
 })
 
-export const config = { path: '/api/create-order' }
+// at most 10 calls a minute from one visitor — stops scripts hammering it
+export const config = { path: '/api/create-order', rateLimit: { windowLimit: 10, windowSize: 60, aggregateBy: ['ip', 'domain'] } }

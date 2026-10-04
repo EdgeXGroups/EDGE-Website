@@ -78,4 +78,5 @@ export default handler(async (req) => {
   }
 })
 
-export const config = { path: '/api/admin-overview' }
+// at most 30 calls a minute from one visitor — stops scripts hammering it
+export const config = { path: '/api/admin-overview', rateLimit: { windowLimit: 30, windowSize: 60, aggregateBy: ['ip', 'domain'] } }

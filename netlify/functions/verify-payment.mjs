@@ -12,4 +12,5 @@ export default handler(async (req) => {
   return { number: order.number, status: order.status }
 })
 
-export const config = { path: '/api/verify-payment' }
+// at most 20 calls a minute from one visitor — stops scripts hammering it
+export const config = { path: '/api/verify-payment', rateLimit: { windowLimit: 20, windowSize: 60, aggregateBy: ['ip', 'domain'] } }

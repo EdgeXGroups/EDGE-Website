@@ -9,6 +9,7 @@ import { brand, designs, sizeCharts } from './content.js'
 import { imagesFor, frontBack, galleryFor } from './mockup.js'
 import { heartHTML, paintHearts, wireBuy, setScrollLock } from './shop-ui.js'
 import { track } from './analytics.js'
+import './consent.js'
 import { SIZES, TAGS, STOCK, chartFor, priceHTML, priceNum, stockOf, buyable, tagsOf, sizesOf, badgeHTML } from './commerce.js'
 
 gsap.registerPlugin(ScrollTrigger, SplitText)

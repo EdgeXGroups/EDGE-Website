@@ -249,3 +249,27 @@ html.sheet-open { overflow: hidden; }
 .foot__legal { display: flex; flex-wrap: wrap; gap: 6px 16px; }
 .foot__legal a { text-decoration: underline; text-underline-offset: 3px; }
 @media (min-width: 900px) { .legal { padding-left: calc(var(--gutter) + 33.3%); max-width: none; padding-right: 12vw; } }
+
+/* ───────── Cookie consent ───────── */
+.consent {
+  position: fixed; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 90;
+  display: grid; gap: 12px; padding: 18px 18px 16px; border-radius: 18px;
+  background: rgba(20, 20, 20, 0.94); border: 1px solid var(--line); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  transform: translateY(calc(100% + 24px)); transition: transform 0.55s var(--ease-out);
+}
+.consent.is-on { transform: none; }
+.consent[hidden] { display: none; }
+.consent__title { font-size: 26px; }
+.consent__title .serif { color: var(--accent); }
+.consent__text { color: #cfcbc2; font-size: 14px; line-height: 1.5; }
+.consent__text a { color: var(--bone); text-decoration: underline; text-underline-offset: 3px; }
+.consent__btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+/* both choices equally easy to pick */
+.consent__btn { padding: 13px 14px; border-radius: 99px; border: 1px solid var(--line); font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; transition: background 0.25s, color 0.25s, border-color 0.25s; }
+.consent__btn:hover { border-color: var(--bone); }
+.consent__btn--yes { background: var(--bone); color: var(--ink); border-color: var(--bone); }
+.consent__btn--yes:hover { background: var(--accent); border-color: var(--accent); }
+/* the Collection page's Sort | Filter bar sits on the bottom edge on phones */
+@media (max-width: 899px) { .page-archive .consent { bottom: calc(70px + env(safe-area-inset-bottom)); } }
+@media (min-width: 700px) { .consent { left: auto; right: 24px; bottom: 24px; width: 400px; } }

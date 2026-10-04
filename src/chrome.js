@@ -3,6 +3,8 @@
 // <body data-page="…"> and a <main id="top">.
 import { brand, designs } from './content.js'
 
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c])
+
 const page = document.body.dataset.page || 'home'
 const home = page === 'home'
 
@@ -16,7 +18,7 @@ const LINKS = [
 ]
 const current = (p) => (p === page ? ' aria-current="page"' : '')
 const status = {
-  home: `<span class="dot"></span>${brand.drop}&nbsp;— live`,
+  home: `<span class="dot"></span>${esc(brand.drop)}&nbsp;— live`,
   collection: `<span class="dot"></span>Collection — ${String(designs.length).padStart(2, '0')}&nbsp;designs`,
   team: '<span class="dot"></span>The team',
   contact: '<span class="dot"></span>We read everything',
@@ -49,8 +51,8 @@ const digits = (brand.phone || '').replace(/[^\d+]/g, '')
 const rows = [
   brand.instagram && ['Instagram', `<a href="https://instagram.com/${brand.instagram}" target="_blank" rel="noopener">@${brand.instagram}</a>`],
   brand.email && ['Email', `<a href="mailto:${brand.email}">${brand.email}</a>`],
-  brand.location && ['Location', `<span>${brand.location}</span>`],
-  brand.phone && ['Phone', digits.length >= 10 ? `<a href="tel:${digits}">${brand.phone}</a>` : `<span>${brand.phone}</span>`],
+  brand.location && ['Location', `<span>${esc(brand.location)}</span>`],
+  brand.phone && ['Phone', digits.length >= 10 ? `<a href="tel:${digits}">${esc(brand.phone)}</a>` : `<span>${esc(brand.phone)}</span>`],
 ].filter(Boolean)
 const info = rows.map(([k, v]) => `<li><span class="mono">${k}</span>${v}</li>`).join('')
 
@@ -62,7 +64,7 @@ const after = `
     </div>
     <div class="foot__row mono">
       <span>© <span class="year"></span> EDGE</span>
-      <nav class="foot__legal" aria-label="Policies"><a href="/shipping.html">Shipping</a><a href="/refunds.html">Refunds</a><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a></nav>
+      <nav class="foot__legal" aria-label="Policies"><a href="/shipping.html">Shipping</a><a href="/refunds.html">Refunds</a><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a><a href="#" data-cookie-settings>Cookie settings</a></nav>
       <a class="foot__credit" href="https://sketchfab.com/3d-models/fish-t-shirt-b2bf0e93920f42618fb0255e137a61c9" target="_blank" rel="noopener">3D tee: “fish t-shirt” by Gleb Gubkin, CC BY 4.0 (modified)</a>
       <a href="#top" data-magnetic>Back to top ↑</a>
     </div>

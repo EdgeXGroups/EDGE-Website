@@ -28,4 +28,4 @@ export default async (req) => {
   }
 }
 
-export const config = { path: '/api/razorpay-webhook' }
+export const config = { path: '/api/razorpay-webhook', rateLimit: { windowLimit: 300, windowSize: 60, aggregateBy: ['domain'] } }

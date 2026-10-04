@@ -27,7 +27,7 @@ const PAGES = {
         <li><b>When you place an order:</b> your name, email, mobile number, delivery address and what you bought.</li>
         <li><b>Your wishlist, bag and saved addresses</b>, if you're signed in, so they're there on every device.</li>
         <li><b>In your browser only:</b> your bag (for guests), your last-used checkout details and a few display preferences, kept in local storage on your device.</li>
-        <li><b>How the site is used:</b> pages and designs viewed, time spent, what's added to the bag, and your device type and the site that sent you — collected with PostHog analytics so we can see what people like and make the site better. Anonymous visitors aren't identified; if you're signed in, it's linked to your account. Your browser's “Do Not Track” setting is respected.</li>
+        <li><b>How the site is used:</b> pages and designs viewed, time spent, what's added to the bag, and your device type and the site that sent you — collected with PostHog analytics so we can see what people like and make the site better — <b>only if you accept analytics</b> on the cookie banner. Anonymous visitors aren't identified; if you're signed in, it's linked to your account. Typed details are hidden from session recordings, and your browser's “Do Not Track” setting is respected.</li>
       </ul>
       <h2>Payments</h2>
       <p>Payments are handled by <b>Razorpay</b>. Your card, UPI and bank details go straight to Razorpay and never reach our servers. We only receive confirmation that a payment succeeded and its reference number. See Razorpay's privacy policy for how they handle your payment data.</p>
@@ -45,6 +45,9 @@ const PAGES = {
       <p>Order records are kept for as long as tax and accounting law requires (generally up to 8 years). Your account, wishlist and saved addresses are kept until you ask us to delete them.</p>
       <h2>Your rights</h2>
       <p>Under India's Digital Personal Data Protection Act, 2023, you can ask to see, correct or delete your personal data, or withdraw your consent. Email ${email} and we'll respond within 30 days. Deleting your account doesn't delete order records we're legally required to keep.</p>
+      <h2>Cookies and local storage</h2>
+      <p><b>Essential</b> — your sign-in session, your bag and the checkout details you typed are kept in your browser so the shop works. These don't need consent and aren't used for anything else.</p>
+      <p><b>Analytics</b> — PostHog only runs if you choose “Accept” on the cookie banner. If you choose “Essential only”, nothing about your visit is sent to PostHog. You can change your mind any time with “Cookie settings” at the bottom of every page.</p>
       <h2>Children</h2>
       <p>This site isn't meant for anyone under 18 to buy from without a parent or guardian.</p>
       <h2>Changes</h2>

@@ -10,15 +10,18 @@
 //   checkout_started { total, items } · order_paid { number, total }
 import { POSTHOG_KEY, POSTHOG_HOST, POSTHOG_PROXY } from './analytics.config.js'
 import { onUser } from './account.js'
+import { onConsent, analyticsAllowed, hasChosen } from './consent.js'
 
 // only the real site counts — not `npm run dev` on someone's laptop
 const ON = !!POSTHOG_KEY && !import.meta.env.DEV
 const queue = []
 let ph = null
 
+// Nothing leaves the browser without consent: until the visitor chooses, events wait
+// in memory; "Accept" sends them, "Essential only" throws them away.
 export function track(event, props = {}, opts) {
-  if (!ON) return
-  ph ? ph.capture(event, props, opts) : queue.push([event, props, opts])
+  if (!ON || (hasChosen() && !analyticsAllowed())) return
+  ph ? ph.capture(event, props, opts) : queue.length < 50 && queue.push([event, props, opts])
 }
 
 function start() {
@@ -43,7 +46,22 @@ function start() {
   }).catch(() => {})
 }
 
-if (ON) {
+let starting = false
+function startWhenIdle() {
+  if (starting) return
+  starting = true
   const go = () => (window.requestIdleCallback ? requestIdleCallback(start, { timeout: 4000 }) : setTimeout(start, 1500))
   document.readyState === 'complete' ? go() : addEventListener('load', go, { once: true })
+}
+
+if (ON) {
+  onConsent((c) => {
+    if (c?.analytics) {
+      if (ph) ph.opt_in_capturing()
+      else startWhenIdle()
+    } else if (c) {
+      queue.length = 0
+      if (ph) { ph.opt_out_capturing(); ph.stopSessionRecording?.() }
+    }
+  })
 }

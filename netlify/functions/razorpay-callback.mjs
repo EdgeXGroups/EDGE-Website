@@ -31,4 +31,5 @@ export default async (req) => {
   }
 }
 
-export const config = { path: '/api/razorpay-callback' }
+// at most 20 calls a minute from one visitor — stops scripts hammering it
+export const config = { path: '/api/razorpay-callback', rateLimit: { windowLimit: 20, windowSize: 60, aggregateBy: ['ip', 'domain'] } }

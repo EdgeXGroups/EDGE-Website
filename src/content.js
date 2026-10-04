@@ -29,9 +29,38 @@ async function loadRemote() {
 const remote = await loadRemote()
 const live = remote?.designs?.length ? remote : null
 
-export const brand = { ...defaults.brand, ...(remote?.brand || {}) }
-export const designs = live ? live.designs : defaults.designs
-export const team = remote?.team?.length ? remote.team : defaults.team
+// Everything from the database is cleaned once, here, before any page draws it:
+// colours must be colours, image links must be web addresses, handles and numbers
+// only carry the characters they should. Even a hijacked admin account then can't
+// slip code into the pages through these fields.
+const COLOR = /^#[0-9a-f]{3,8}$/i
+const SAFE_URL = /^(https:\/\/|\/)[^\s"'<>()\\`]*$/
+const color = (c, fallback) => (COLOR.test(String(c || '')) ? c : fallback)
+const url = (u) => (u && SAFE_URL.test(String(u)) ? u : '')
+const only = (v, re) => String(v ?? '').replace(re, '')
+
+function cleanDesign(d) {
+  return {
+    ...d,
+    accent: color(d.accent, '#ff4a1c'),
+    garment: d.garment ? color(d.garment, '#f4f4f2') : d.garment,
+    images: (d.images || []).map(url),
+    prints: d.prints ? { front: url(d.prints.front), back: url(d.prints.back) } : d.prints,
+  }
+}
+function cleanBrand(b) {
+  return {
+    ...b,
+    instagram: only(b.instagram, /[^A-Za-z0-9._]/g),
+    whatsapp: only(b.whatsapp, /\D/g),
+    phone: only(b.phone, /[^\d+ ()X-]/g),
+    email: /^[^\s@<>"']+@[^\s@<>"']+\.[^\s@<>"']+$/.test(b.email || '') ? b.email : '',
+  }
+}
+
+export const brand = cleanBrand({ ...defaults.brand, ...(remote?.brand || {}) })
+export const designs = (live ? live.designs : defaults.designs).map(cleanDesign)
+export const team = (remote?.team?.length ? remote.team : defaults.team).map((m) => ({ ...m, photo: url(m.photo), instagram: only(m.instagram, /[^A-Za-z0-9._]/g) }))
 export const sizeCharts = remote?.size_charts || []
 export const { manifesto, pillars, process } = defaults
 
