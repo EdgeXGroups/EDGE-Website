@@ -57,6 +57,14 @@
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
 
+# One address for the shop: anything still served at the old edgewebsite.netlify.app
+# (an older copy that builds from this repo) is forwarded to the real site.
+[[redirects]]
+  from = "https://edgewebsite.netlify.app/*"
+  to = "https://edgexgroup.netlify.app/:splat"
+  status = 301
+  force = true
+
 # PostHog through our own domain (ad blockers block posthog.com). EU cloud.
 [[redirects]]
   from = "/ingest/static/*"
