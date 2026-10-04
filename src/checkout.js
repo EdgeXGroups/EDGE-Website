@@ -7,6 +7,7 @@ import { money, priceHTML } from './commerce.js'
 import { openSignIn, openBag } from './shop-ui.js'
 import { imagesFor } from './mockup.js'
 import { track } from './analytics.js'
+import { TURNSTILE_SITE_KEY } from './turnstile.config.js'
 
 const STATES = ['Andaman and Nicobar Islands', 'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chandigarh', 'Chhattisgarh', 'Dadra and Nagar Haveli and Daman and Diu', 'Delhi', 'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jammu and Kashmir', 'Jharkhand', 'Karnataka', 'Kerala', 'Ladakh', 'Lakshadweep', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Puducherry', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal']
 const REMEMBER = 'edge-checkout' // this browser's last contact + address, to save retyping
@@ -95,6 +96,28 @@ function validate() {
 }
 form.addEventListener('input', (e) => e.target.closest('.co__f')?.classList.remove('is-bad'))
 
+/* ───────── bot check (Cloudflare Turnstile, invisible) ───────── */
+
+let botToken = null
+let botWidget = null
+if (TURNSTILE_SITE_KEY) {
+  window.onEdgeTurnstile = () => {
+    botWidget = window.turnstile.render('.co__bot', {
+      sitekey: TURNSTILE_SITE_KEY,
+      appearance: 'interaction-only', // invisible unless Cloudflare wants a click
+      action: 'checkout',
+      callback: (t) => (botToken = t),
+      'expired-callback': () => (botToken = null),
+      'error-callback': () => (botToken = null),
+    })
+  }
+  const s = document.createElement('script')
+  s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=onEdgeTurnstile'
+  s.async = true
+  document.head.appendChild(s)
+}
+const freshBotToken = () => { if (botWidget != null) { window.turnstile.reset(botWidget); botToken = null } }
+
 /* ───────── pay ───────── */
 
 const loadRazorpay = () => window.Razorpay ? Promise.resolve() : new Promise((res, rej) => {
@@ -141,10 +164,11 @@ form.addEventListener('submit', async (e) => {
   let order
   try {
     ;[order] = await Promise.all([
-      api('create-order', { items: s.ok.map(({ slug, size, qty }) => ({ slug, size, qty })), contact, address }),
+      api('create-order', { items: s.ok.map(({ slug, size, qty }) => ({ slug, size, qty })), contact, address, turnstile: botToken }),
       loadRazorpay(),
     ])
-  } catch (err) { return fail(err.message) }
+  } catch (err) { freshBotToken(); return fail(err.message) }
+  freshBotToken() // each token works once
 
   // remember a new address for signed-in customers (best effort)
   if (user && form.save.checked && !$('.co__check').hidden) {

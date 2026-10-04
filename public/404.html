@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#070707" />
+  <meta name="robots" content="noindex" />
   <title>Lost — EDGE</title>
   <link rel="icon" href="/brand/edge-mark.png" />
   <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@125,900&family=Instrument+Serif:ital@1&family=JetBrains+Mono&display=swap" rel="stylesheet" />
@@ -19,12 +20,15 @@
     em { font-family: 'Instrument Serif', serif; font-weight: 400; color: var(--accent); font-size: clamp(26px, 7vw, 48px); }
     a { font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink); background: var(--bone); padding: 16px 26px; border-radius: 99px; text-decoration: none; margin-top: 12px; }
     a:hover { background: var(--accent); }
+    nav { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+    a.ghost { background: transparent; color: var(--bone); border: 1px solid #2a2a2a; }
+    a.ghost:hover { color: var(--ink); }
   </style>
 </head>
 <body>
   <img src="/brand/edge-mark.png" alt="EDGE" />
   <h1>404</h1>
   <em>You went past the edge.</em>
-  <a href="/">Back to the drop</a>
+  <nav><a href="/">Back to the drop</a><a href="/collection" class="ghost">See every design</a></nav>
 </body>
 </html>

@@ -23,6 +23,11 @@ export default handler(async (req) => {
     throw err
   }
   if (!admin.length) throw new HttpError(403, 'Admins only.')
+  // the session must have passed the authenticator code, same rule as the database (is_admin)
+  const token = (req.headers.get('authorization') || '').split('.')[1] || ''
+  let aal = ''
+  try { aal = JSON.parse(Buffer.from(token.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString()).aal } catch {}
+  if (aal !== 'aal2') throw new HttpError(403, 'Finish two-step sign-in first.')
 
   const key = clean(rawEnv('POSTHOG_PERSONAL_API_KEY'))
   const project = clean(rawEnv('POSTHOG_PROJECT_ID'))

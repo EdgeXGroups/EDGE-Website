@@ -93,6 +93,20 @@ Events go through the site itself (`/ingest/*` → PostHog EU, in `netlify.toml`
    - `POSTHOG_PROJECT_ID` — the number in your PostHog URL (`/project/12345/…`)
    Then redeploy.
 
+## Security
+- **Database:** row-level security on every table — visitors read only published content; customers only their own wishlist, bag, addresses and orders; only admins (with two-step sign-in) can change anything. Orders are created and marked paid only by the server functions.
+- **Admin two-step sign-in:** password + a 6-digit code from an authenticator app. The admin page sets it up on first sign-in. Then run `supabase/migrations/0008_admin_mfa.sql` so the database itself refuses admin actions without the code. Lost phone: Supabase → Authentication → Users → your user → remove the MFA factor, sign in again and re-scan.
+- **Server functions** (`netlify/functions`): prices recalculated server-side, Razorpay signatures verified, only our own pages may call them (origin check), per-visitor rate limits, errors reported to PostHog.
+- **Headers** (`netlify.toml`): Content-Security-Policy allow-list, no framing by other sites, HSTS, Permissions-Policy.
+- **Secrets** live only in Netlify environment variables. The browser only ever gets public keys (Supabase publishable key, PostHog project key, Turnstile site key).
+- **Bot protection (optional):** Cloudflare Turnstile on checkout. Cloudflare → Turnstile → Add widget (hostname `edgexgroup.netlify.app`, mode Invisible) → site key into `src/turnstile.config.js`, secret key into Netlify as `TURNSTILE_SECRET_KEY`, redeploy. Off until both are set.
+- **Cookie consent:** analytics (PostHog) only after “Accept”; essential storage (sign-in, bag) always on.
+
+## Sharing & search
+- Link previews (WhatsApp, Instagram DMs, X, Discord, iMessage) use `public/brand/og.jpg`, built by `python scripts/make-og-image.py` from the featured designs — rerun it when the showroom changes.
+- `public/robots.txt` keeps admin/checkout/account out of search engines; `public/sitemap.xml` lists the public pages.
+- Branded `404.html`.
+
 ## Adding a new design without the admin
 The admin is the normal way. The scripts below do the same processing offline and write the files into the repo (then add the design to `src/content.defaults.js`):
 1. Drop the raw image(s) into `/design`, register them in `scripts/process-designs.py`, run `python scripts/process-designs.py` (needs `pip install pillow numpy scipy`).

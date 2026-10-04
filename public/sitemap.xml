@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://edgexgroup.netlify.app/</loc><changefreq>weekly</changefreq></url>
+  <url><loc>https://edgexgroup.netlify.app/collection</loc><changefreq>weekly</changefreq></url>
+  <url><loc>https://edgexgroup.netlify.app/team</loc><changefreq>monthly</changefreq></url>
+  <url><loc>https://edgexgroup.netlify.app/contact</loc><changefreq>monthly</changefreq></url>
+  <url><loc>https://edgexgroup.netlify.app/shipping</loc><changefreq>monthly</changefreq></url>
+  <url><loc>https://edgexgroup.netlify.app/refunds</loc><changefreq>monthly</changefreq></url>
+  <url><loc>https://edgexgroup.netlify.app/privacy</loc><changefreq>monthly</changefreq></url>
+  <url><loc>https://edgexgroup.netlify.app/terms</loc><changefreq>monthly</changefreq></url>
+</urlset>

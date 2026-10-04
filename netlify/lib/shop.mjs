@@ -11,6 +11,18 @@ import { SUPABASE_URL, SUPABASE_KEY } from '../../src/supabase.config.js'
 import { lineProblem, priceNum, sizesOf, shippingFor, MAX_QTY } from '../../src/commerce.js'
 import { PostHog } from 'posthog-node'
 import { POSTHOG_KEY, POSTHOG_HOST } from '../../src/analytics.config.js'
+import { TURNSTILE_SITE_KEY } from '../../src/turnstile.config.js'
+
+// Cloudflare Turnstile: enforced only when both the public site key and the secret are set
+export async function humanCheck(req, token) {
+  const secret = String(rawEnv('TURNSTILE_SECRET_KEY')).trim()
+  if (!TURNSTILE_SITE_KEY || !secret) return
+  if (!token) throw new HttpError(403, 'Please wait a moment for the security check, then try again.')
+  const body = new URLSearchParams({ secret, response: String(token), remoteip: req.headers.get('x-nf-client-connection-ip') || '' })
+  const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', { method: 'POST', body }).catch(() => null)
+  const data = res ? await res.json().catch(() => ({})) : {}
+  if (!data.success) throw new HttpError(403, 'We couldn’t confirm you’re a person — refresh the page and try again.')
+}
 
 // Server crashes → PostHog Error tracking, next to the browser errors.
 // A short-lived client per call: functions freeze once they respond, so flush first.
@@ -30,9 +42,18 @@ export class HttpError extends Error {
 export const json = (status, body) =>
   new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } })
 
-// wrap a handler: POST only, JSON in, errors out as { error }
+// Only our own pages may call these from a browser: the live site, its deploy previews
+// and local dev. Browsers always send Origin on cross-site requests, so another site's
+// page gets a 403 (and no CORS headers are ever sent, so it couldn't read a reply anyway).
+// No Origin at all = not a browser page (curl, Razorpay's servers) — rate limits and
+// validation handle those.
+const ORIGINS = [/^https:\/\/edgexgroup\.netlify\.app$/, /^https:\/\/[a-z0-9-]+--edgexgroup\.netlify\.app$/, /^http:\/\/localhost:(5173|8888)$/]
+export const originOk = (req) => { const o = req.headers.get('origin'); return !o || ORIGINS.some((r) => r.test(o)) }
+
+// wrap a handler: POST only, own origin only, JSON in, errors out as { error }
 export const handler = (fn) => async (req, context) => {
   if (req.method !== 'POST') return json(405, { error: 'POST only' })
+  if (!originOk(req)) return json(403, { error: 'Not allowed from this site.' })
   try {
     return json(200, await fn(req))
   } catch (err) {

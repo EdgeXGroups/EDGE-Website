@@ -159,3 +159,10 @@ main.wrap { max-width: 980px; margin: 0 auto; padding: 22px 16px 120px; display:
 .ins__bar { grid-area: bar; height: 6px; border-radius: 4px; background: rgba(255, 255, 255, 0.06); overflow: hidden; }
 .ins__bar i { display: block; height: 100%; border-radius: 4px; background: var(--accent); }
 .ins__setup p + p { margin-top: 6px; }
+
+/* two-step sign-in */
+.mfa { gap: 14px; }
+.mfa__steps { padding-left: 20px; display: grid; gap: 6px; font-size: 14px; line-height: 1.45; }
+.login .mfa__qr { width: 200px; height: 200px; justify-self: start; object-fit: contain; background: #fff; padding: 10px; border-radius: 12px; }
+.mfa__manual code { display: block; margin-top: 8px; padding: 10px 12px; border-radius: 10px; background: var(--ink-2); border: 1px solid var(--line); font-family: var(--f-mono); font-size: 13px; letter-spacing: 0.08em; word-break: break-all; user-select: all; }
+.mfa__help { font-size: 12px; line-height: 1.5; }

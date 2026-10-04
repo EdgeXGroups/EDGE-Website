@@ -1,9 +1,10 @@
 // POST /api/create-order  { items: [{slug,size,qty}], contact: {email,phone}, address: {...} }
 // Prices the bag from the database, opens a Razorpay order and a pending EDGE order.
-import { handler, priceBag, checkCustomer, userFrom, razorpay, razorpayKeyId, db } from '../lib/shop.mjs'
+import { handler, priceBag, checkCustomer, userFrom, razorpay, razorpayKeyId, db, humanCheck } from '../lib/shop.mjs'
 
 export default handler(async (req) => {
   const body = await req.json().catch(() => ({}))
+  await humanCheck(req, body.turnstile) // no-op until Turnstile keys are set
   const customer = checkCustomer(body)
   const [bag, user] = await Promise.all([priceBag(body.items), userFrom(req)])
 

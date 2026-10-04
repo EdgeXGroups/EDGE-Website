@@ -26,6 +26,7 @@ function explain(err) {
   const m = err?.message || String(err)
   if (/row-level security|permission denied|violates.*policy/i.test(m)) return 'This account isn’t allowed to edit the site.'
   if (/Invalid login credentials/i.test(m)) return 'Wrong email or password.'
+  if (/aal2|AAL2|assurance level/i.test(m)) return 'Finish two-step sign-in first (enter the code from your authenticator app).'
   if (/Could not find the 'price' column/i.test(m)) return 'Prices need one database update — run supabase/migrations/0003_price.sql in the Supabase SQL editor.'
   if (/size_chart|size_charts/i.test(m) && /Could not find|does not exist/i.test(m)) return 'Size charts need one database update — run supabase/migrations/0005_size_charts.sql in the Supabase SQL editor.'
   if (/Could not find the '(mrp|tags|sizes|stock)' column/i.test(m)) return 'The shop fields need one database update — run supabase/migrations/0004_shop.sql in the Supabase SQL editor.'
@@ -864,8 +865,82 @@ async function start() {
     await db.auth.signOut()
     return renderLogin(`${user.email} isn’t an admin. Ask whoever runs the Supabase project to add it.`)
   }
+  if (!(await secondStep())) return // waiting for the authenticator code
   await loadData()
   renderShell()
+}
+
+/* ───────── Two-step sign-in (authenticator app) ───────── */
+
+// true once this session has passed the 6-digit code (Supabase "aal2"); otherwise shows the code screen
+async function secondStep() {
+  const { data: aal, error } = await db.auth.mfa.getAuthenticatorAssuranceLevel()
+  if (error) throw new Error(explain(error))
+  if (aal.currentLevel === 'aal2') return true
+  const { data: f, error: fe } = await db.auth.mfa.listFactors()
+  if (fe) throw new Error(explain(fe))
+  const verified = (f.totp || []).find((x) => x.status === 'verified')
+  if (verified) renderCode(verified.id)
+  else await renderEnroll(f.all || [])
+  return false
+}
+
+const codeField = '<label class="f"><span>6-digit code</span><input name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required autofocus placeholder="123456" /></label>'
+
+function wireCode(form, factorId, after = start) {
+  form.code.addEventListener('input', () => { form.code.value = form.code.value.replace(/\D/g, '').slice(0, 6); if (form.code.value.length === 6) form.requestSubmit() })
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault()
+    const btn = $('button[type=submit]', form)
+    btn.disabled = true
+    const { error } = await db.auth.mfa.challengeAndVerify({ factorId, code: form.code.value })
+    if (error) {
+      btn.disabled = false
+      $('.err', form).textContent = /invalid|expired/i.test(error.message) ? 'That code didn’t work — codes change every 30 seconds, try the current one.' : explain(error)
+      form.code.value = ''
+      form.code.focus()
+      return
+    }
+    after().catch((err) => renderLogin(explain(err)))
+  })
+  $('[data-act="out"]', form).addEventListener('click', logout)
+}
+
+function renderCode(factorId) {
+  loginShell(`
+    <form>
+      <p class="muted">Open your authenticator app and enter the code for <b>EDGE admin</b>.</p>
+      ${codeField}
+      <button class="b b--primary" type="submit">Verify</button>
+      <button class="b" type="button" data-act="out">Sign out</button>
+      <p class="err"></p>
+      <p class="muted mfa__help">Lost your phone? In Supabase → Authentication → Users → your user, remove the MFA factor, then sign in to set it up again.</p>
+    </form>`)
+  wireCode($('form', app), factorId)
+}
+
+async function renderEnroll(factors) {
+  // clear half-finished set-ups (e.g. a closed tab) so a fresh QR code can be made
+  for (const x of factors.filter((x) => x.status === 'unverified')) await db.auth.mfa.unenroll({ factorId: x.id })
+  const { data, error } = await db.auth.mfa.enroll({ factorType: 'totp', friendlyName: `EDGE admin ${new Date().toISOString().slice(0, 16)}`, issuer: 'EDGE admin' })
+  if (error) throw new Error(/disabled|not enabled/i.test(error.message) ? 'Two-step sign-in is switched off in Supabase — turn on TOTP under Authentication → Multi-Factor.' : explain(error))
+  const secret = data.totp.secret.replace(/(.{4})/g, '$1 ').trim()
+  loginShell(`
+    <form class="mfa">
+      <p><b>Set up two-step sign-in.</b> From now on the admin needs your password <i>and</i> a code from your phone — so a leaked password alone can't touch the shop.</p>
+      <ol class="mfa__steps muted">
+        <li>Install an authenticator app — Google Authenticator, Microsoft Authenticator, Authy or 1Password.</li>
+        <li>In the app, add an account and scan this code:</li>
+      </ol>
+      <img class="mfa__qr" src="${esc(data.totp.qr_code)}" alt="QR code for the authenticator app" />
+      <details class="mfa__manual"><summary class="muted">Can’t scan? Type this key instead</summary><code>${esc(secret)}</code></details>
+      <ol class="mfa__steps muted" start="3"><li>Enter the 6-digit code the app shows:</li></ol>
+      ${codeField}
+      <button class="b b--primary" type="submit">Turn on two-step sign-in</button>
+      <button class="b" type="button" data-act="out">Sign out</button>
+      <p class="err"></p>
+    </form>`)
+  wireCode($('form', app), data.id, async () => { toast('Two-step sign-in is on'); await start() })
 }
 
 let recovering = false

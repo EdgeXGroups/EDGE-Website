@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /checkout
+Disallow: /account
+Disallow: /api/
+
+Sitemap: https://edgexgroup.netlify.app/sitemap.xml
